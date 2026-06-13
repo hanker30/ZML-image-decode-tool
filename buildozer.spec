@@ -23,7 +23,7 @@ android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,MANAGE_EXTERN
 
 # Android 版本
 android.api = 29
-android.minapi = 21
+android.minapi = 24
 android.archs = arm64-v8a
 
 # 允许备份
