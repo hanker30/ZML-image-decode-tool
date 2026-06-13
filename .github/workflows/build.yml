@@ -24,16 +24,13 @@ jobs:
             libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
           pip install --upgrade buildozer cython
 
-      # ====== 新增：自动接受所有 Android SDK 许可证 ======
       - name: Accept Android SDK licenses
         run: |
           yes | sdkmanager --licenses || true
-      # ==================================================
 
       - name: Build APK
         run: |
           cd ${{ github.workspace }}
-          # 再次确保许可证被接受，然后执行打包
           yes | buildozer -v android debug
 
       - name: Upload APK
