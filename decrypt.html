@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>图像解密工具</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0c0e14;--card:#161923;--bd:#1e2130;
+  --ac:#e8a849;--ac12:rgba(232,168,73,.12);
+  --tx:#e8e4df;--mt:#6b6e7b;
+  --gn:#4ade80;--gn10:rgba(74,222,128,.1);
+  --rd:#f87171;--rd10:rgba(248,113,113,.1);
+  --r:14px;
+  --ff:'PingFang SC','Noto Sans SC','Microsoft YaHei',system-ui,sans-serif;
+}
+html,body{font-family:var(--ff);background:var(--bg);color:var(--tx);min-height:100vh;-webkit-tap-highlight-color:transparent}
+body{padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.app{max-width:480px;margin:0 auto}
+.hd{text-align:center;padding:20px 0 24px}
+.hd h1{font-size:22px;font-weight:700;letter-spacing:.03em}
+.hd p{font-size:13px;color:var(--mt);margin-top:6px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;padding:10px 0;background:var(--card);border:1px solid var(--bd);border-radius:10px;color:var(--mt);font-size:14px;font-weight:500;font-family:var(--ff);cursor:pointer;transition:all .2s;text-align:center}
+.tab.on{border-color:var(--ac);color:var(--ac);background:var(--ac12)}
+.cd{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.ct{font-size:12px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+.dz{border:2px dashed var(--bd);border-radius:12px;padding:36px 16px;text-align:center;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.dz.over{border-color:var(--ac);background:var(--ac12)}
+.dz.ok{border-color:var(--gn);background:var(--gn10)}
+.dz input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.dz .ic{font-size:40px;margin-bottom:10px;filter:grayscale(.3)}
+.dz .lb{font-size:14px;color:var(--mt);line-height:1.6}
+.dz .lb b{color:var(--ac)}
+.dz .fn{font-size:13px;color:var(--gn);margin-top:8px;word-break:break-all;display:none}
+.dz.ok .fn{display:block}
+.fl{margin-top:12px;max-height:180px;overflow-y:auto}
+.fl:empty{display:none}
+.fi{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;margin-bottom:6px;font-size:13px}
+.fi .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fi .dt{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dt.w{background:var(--mt)}.dt.s{background:var(--gn)}.dt.e{background:var(--rd)}
+.fg{margin-bottom:12px}.fg:last-child{margin-bottom:0}
+.fg label{display:block;font-size:13px;font-weight:500;margin-bottom:6px}
+.fg input{width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--bd);border-radius:10px;color:var(--tx);font-size:15px;font-family:var(--ff);transition:border .2s}
+.fg input:focus{outline:none;border-color:var(--ac)}
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:var(--ff);cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.btn-p{background:var(--ac);color:var(--bg)}.btn-p:hover{filter:brightness(1.08)}.btn-p:active{transform:scale(.98)}.btn-p:disabled{opacity:.4;cursor:not-allowed;filter:none;transform:none}
+.btn-s{background:var(--card);color:var(--tx);border:1px solid var(--bd);font-weight:500;margin-top:10px;display:none}.btn-s:hover{border-color:var(--ac)}
+.prog{height:3px;background:var(--bd);border-radius:2px;overflow:hidden;margin:14px 0;display:none}
+.prog .bar{height:100%;width:0;background:var(--ac);border-radius:2px;transition:width .25s}
+.msg{text-align:center;font-size:14px;padding:12px;border-radius:10px;margin:10px 0;display:none}
+.msg.v{display:block}.msg.ok{background:var(--gn10);color:var(--gn)}.msg.er{background:var(--rd10);color:var(--rd)}.msg.inf{background:rgba(96,165,250,.1);color:#60a5fa}
+.pv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.pb{position:relative;border-radius:8px;overflow:hidden;background:var(--bg)}
+.pb img{width:100%;display:block}
+.pb .tg{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500}
+.ft{text-align:center;font-size:12px;color:var(--mt);margin-top:28px;padding-bottom:8px;line-height:1.8}
+@keyframes sp{to{transform:rotate(360deg)}}
+.sp{display:inline-block;width:14px;height:14px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.cd{animation:up .35s ease both}
+.cd:nth-child(2){animation-delay:.04s}.cd:nth-child(3){animation-delay:.08s}.cd:nth-child(4){animation-delay:.12s}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hd"><h1>图像解密工具</h1><p>选择加密图像，一键还原</p></div>
+  <div class="tabs">
+    <button class="tab on" id="tabS">单张解密</button>
+    <button class="tab" id="tabB">批量解密</button>
+  </div>
+  <div class="cd">
+    <div class="ct">选择图像</div>
+    <div class="dz" id="dz">
+      <input type="file" id="fi" accept="image/*">
+      <div class="ic">🖼️</div>
+      <div class="lb"><b>点击选择</b> 或拖拽图片到此处<br><span style="font-size:12px">支持 JPG · PNG · BMP · GIF</span></div>
+      <div class="fn" id="fn"></div>
+    </div>
+    <div class="fl" id="fl"></div>
+  </div>
+  <div class="cd">
+    <div class="ct">解密设置</div>
+    <div class="fg"><label>密码</label><input id="pwd" type="text" value="在梦里w"></div>
+    <div class="fg"><label>块大小</label><input id="bs" type="number" value="16" min="1" max="256"></div>
+  </div>
+  <button class="btn btn-p" id="go" disabled>开始解密</button>
+  <div class="prog" id="pr"><div class="bar" id="pb"></div></div>
+  <div class="msg" id="ms"></div>
+  <div class="cd" id="pc" style="display:none">
+    <div class="ct">对比预览</div>
+    <div class="pv">
+      <div class="pb"><span class="tg">原图（加密）</span><img id="iO"></div>
+      <div class="pb"><span class="tg">解密后</span><img id="iD"></div>
+    </div>
+  </div>
+  <button class="btn btn-s" id="dl">下载解密图像</button>
+  <div class="ft">纯前端运行 · 图片不经过任何服务器<br>解密结果仅在本机生成</div>
+</div>
+<script>
+'use strict';
+
+/* ===== SHA-512 纯JS实现（BigInt 64位，兼容所有浏览器） ===== */
+function sha512(msg){
+  const M=0xFFFFFFFFFFFFFFFFn;
+  const RR=(x,n)=>((x>>BigInt(n))|(x<<BigInt(64-n)))&M;
+  const K=[0x428a2f98d728ae22n,0x7137449123ef65cdn,0xb5c0fbcfec4d3b2fn,0xe9b5dba58189dbbcn,0x3956c25bf348b538n,0x59f111f1b605d019n,0x923f82a4af194f9bn,0xab1c5ed5da6d8118n,0xd807aa98a3030242n,0x12835b0145706fben,0x243185be4ee4b28cn,0x550c7dc3d5ffb4e2n,0x72be5d74f27b896fn,0x80deb1fe3b1696b1n,0x9bdc06a725c71235n,0xc19bf174cf692694n,0xe49b69c19ef14ad2n,0xefbe4786384f25e3n,0x0fc19dc68b8cd5b5n,0x240ca1cc77ac9c65n,0x2de92c6f592b0275n,0x4a7484aa6ea6e483n,0x5cb0a9dcbd41fbd4n,0x76f988da831153b5n,0x983e5152ee66dfabn,0xa831c66d2db43210n,0xb00327c898fb213fn,0xbf597fc7beef0ee4n,0xc6e00bf33da88fc2n,0xd5a79147930aa725n,0x06ca6351e003826fn,0x142929670a0e6e70n,0x27b70a8546d22ffcn,0x2e1b21385c26c926n,0x4d2c6dfc5ac42aedn,0x53380d139d95b3dfn,0x650a73548baf63den,0x766a0abb3c77b2a8n,0x81c2c92e47edaee6n,0x92722c851482353bn,0xa2bfe8a14cf10364n,0xa81a664bbc423001n,0xc24b8b70d0f89791n,0xc76c51a30654be30n,0xd192e819d6ef5218n,0xd69906245565a910n,0xf40e35855771202an,0x106aa07032bbd1b8n,0x19a4c116b8d2d0c8n,0x1e376c085141ab53n,0x2748774cdf8eeb99n,0x34b0bcb5e19b48a8n,0x391c0cb3c5c95a63n,0x4ed8aa4ae3418acbn,0x5b9cca4f7763e373n,0x682e6ff3d6b2b8a3n,0x748f82ee5defb2fcn,0x78a5636f43172f60n,0x84c87814a1f0ab72n,0x8cc702081a6439ecn,0x90befffa23631e28n,0xa4506cebde82bde9n,0xbef9a3f7b2c67915n,0xc67178f2e372532bn,0xca273eceea26619cn,0xd186b8c721c0c207n,0xeada7dd6cde0eb1en,0xf57d4f7fee6ed178n,0x06f067aa72176fban,0x0a637dc5a2c898a6n,0x113f9804bef90daen,0x1b710b35131c471bn,0x28db77f523047d84n,0x32caab7b40c72493n,0x3c9ebe0a15c9bebcn,0x431d67c49c100d4cn,0x4cc5d4becb3e42b6n,0x597f299cfc657e2an,0x5fcb6fab3ad6faecn,0x6c44198c4a475817n];
+  let H=[0x6a09e667f3bcc908n,0xbb67ae8584caa73bn,0x3c6ef372fe94f82bn,0xa54ff53a5f1d36f1n,0x510e527fade682d1n,0x9b05688c2b3e6c1fn,0x1f83d9abfb41bd6bn,0x5be0cd19137e2179n];
+  const ml=msg.length,r=(ml+1)%128,pz=r<=112?112-r:128-r+112,tl=ml+1+pz+16;
+  const p=new Uint8Array(tl);p.set(msg);p[ml]=0x80;
+  const dv=new DataView(p.buffer);
+  try{dv.setBigUint64(tl-16,0n);dv.setBigUint64(tl-8,BigInt(ml)*8n)}
+  catch(e){dv.setUint32(tl-16,0);dv.setUint32(tl-12,0);dv.setUint32(tl-8,0);dv.setUint32(tl-4,ml*8)}
+  for(let o=0;o<tl;o+=128){
+    const W=new Array(80);
+    for(let t=0;t<16;t++){try{W[t]=dv.getBigUint64(o+t*8)}catch(e){W[t]=(BigInt(dv.getUint32(o+t*8))<<32n)|BigInt(dv.getUint32(o+t*8+4))}}
+    for(let t=16;t<80;t++){W[t]=(W[t-16]+(RR(W[t-15],1)^RR(W[t-15],8)^(W[t-15]>>7n))+W[t-7]+(RR(W[t-2],19)^RR(W[t-2],61)^(W[t-2]>>6n)))&M}
+    let[a,b,c,d,e,f,g,h]=H;
+    for(let t=0;t<80;t++){
+      const T1=(h+(RR(e,14)^RR(e,18)^RR(e,41))+((e&f)^(~e&g)&M)+K[t]+W[t])&M;
+      const T2=((RR(a,28)^RR(a,34)^RR(a,39))+((a&b)^(a&c)^(b&c)))&M;
+      h=g;g=f;f=e;e=(d+T1)&M;d=c;c=b;b=a;a=(T1+T2)&M;
+    }
+    H=[(H[0]+a)&M,(H[1]+b)&M,(H[2]+c)&M,(H[3]+d)&M,(H[4]+e)&M,(H[5]+f)&M,(H[6]+g)&M,(H[7]+h)&M];
+  }
+  const out=new Uint8Array(64),odv=new DataView(out.buffer);
+  for(let i=0;i<8;i++){try{odv.setBigUint64(i*8,H[i])}catch(e){odv.setUint32(i*8,Number(H[i]>>32n));odv.setUint32(i*8+4,Number(H[i]&0xFFFFFFFFn))}}
+  return out;
+}
+
+/* ===== Mersenne Twister — 与 Python random 模块完全兼容 ===== */
+class PyRng{
+  constructor(){this.N=624;this.M=397;this.mt=new Array(624);this.mi=625;this._b=0}
+  _ig(s){this.mt[0]=s>>>0;for(this.mi=1;this.mi<this.N;this.mi++){s=this.mt[this.mi-1]^(this.mt[this.mi-1]>>>30);this.mt[this.mi]=(((((s>>>16)*1812433253)<<16)+(s&0xffff)*1812433253)+this.mi)>>>0}}
+  _ia(k){this._ig(19650218);let i=1,j=0,n=Math.max(this.N,k.length);for(;n>0;n--){this.mt[i]=((this.mt[i]^Math.imul(this.mt[i-1]^(this.mt[i-1]>>>30),1664525))+k[j]+j)>>>0;i++;j++;if(i>=this.N){this.mt[0]=this.mt[this.N-1];i=1}if(j>=k.length)j=0}for(n=this.N-1;n>0;n--){this.mt[i]=((this.mt[i]^Math.imul(this.mt[i-1]^(this.mt[i-1]>>>30),1566083941))-i)>>>0;i++;if(i>=this.N){this.mt[0]=this.mt[this.N-1];i=1}}this.mt[0]=0x80000000}
+  _gi(){let y;const mg=[0,0x9908b0df];if(this.mi>=this.N){let k;for(k=0;k<this.N-this.M;k++){y=(this.mt[k]&0x80000000)|(this.mt[k+1]&0x7fffffff);this.mt[k]=this.mt[k+this.M]^(y>>>1)^mg[y&1]}for(;k<this.N-1;k++){y=(this.mt[k]&0x80000000)|(this.mt[k+1]&0x7fffffff);this.mt[k]=this.mt[k+(this.M-this.N)]^(y>>>1)^mg[y&1]}y=(this.mt[this.N-1]&0x80000000)|(this.mt[0]&0x7fffffff);this.mt[this.N-1]=this.mt[this.M-1]^(y>>>1)^mg[y&1];this.mi=0}y=this.mt[this.mi++];y^=(y>>>11);y^=(y<<7)&0x9d2c5680;y^=(y<<15)&0xefc60000;y^=(y>>>18);return y>>>0}
+  async seed(s){const d=new TextEncoder().encode(s);let h;try{h=new Uint8Array(await crypto.subtle.digest('SHA-512',d))}catch(e){h=sha512(d)}const c=new Uint8Array(d.length+64);c.set(d,0);c.set(h,d.length);let b=0n;for(let i=0;i<c.length;i++)b=(b<<8n)|BigInt(c[i]);const k=[];while(b>0n){k.push(Number(b&0xFFFFFFFFn));b>>=32n}k.length<=1?this._ig(k[0]||0):this._ia(k)}
+  _gb(k){if(k<=0)return 0;const nb=Math.ceil(k/8);let r=0n;for(let i=0;i<nb;i++){if(i%4===0)this._b=this._gi();r=(r<<8n)|BigInt((this._b>>>(24-(i%4)*8))&0xff)}return Number(nb*8-k>0?r>>BigInt(nb*8-k):r)}
+  _rb(n){const k=n.toString(2).length;let r;do{r=this._gb(k)}while(r>=n);return r}
+  shuffle(a){for(let i=a.length-1;i>0;i--){const j=this._rb(i+1);const t=a[i];a[i]=a[j];a[j]=t}}
+}
+
+/* ===== 图像解密核心 ===== */
+async function decrypt(srcImg,pwd,bs,onProg){
+  const sw=srcImg.naturalWidth||srcImg.width,sh=srcImg.naturalHeight||srcImg.height;
+  const sc=document.createElement('canvas');sc.width=sw;sc.height=sh;
+  sc.getContext('2d').drawImage(srcImg,0,0);
+  const nw=Math.floor(sw/bs)*bs,nh=Math.floor(sh/bs)*bs;
+  if(nw===0||nh===0)throw new Error('图像尺寸太小，无法解密');
+  const ox=Math.floor((sw-nw)/2),oy=Math.floor((sh-nh)/2);
+  const cols=nw/bs,rows=nh/bs,nb=cols*rows;
+  const rng=new PyRng();await rng.seed(pwd);
+  const idx=Array.from({length:nb},(_,i)=>i);rng.shuffle(idx);
+  const inv=new Array(nb);for(let i=0;i<nb;i++)inv[idx[i]]=i;
+  const oc=document.createElement('canvas');oc.width=nw;oc.height=nh;
+  const ctx=oc.getContext('2d');
+  const BATCH=500;
+  for(let s=0;s<nb;s+=BATCH){
+    const e=Math.min(s+BATCH,nb);
+    for(let j=s;j<e;j++){
+      const i=inv[j];
+      const sr=Math.floor(j/cols),sc2=j%cols;
+      const dr=Math.floor(i/cols),dc=i%cols;
+      ctx.drawImage(sc,ox+sc2*bs,oy+sr*bs,bs,bs,dc*bs,dr*bs,bs,bs);
+    }
+    if(onProg)onProg(e/nb);
+    await new Promise(r=>setTimeout(r,0));
+  }
+  return oc;
+}
+
+/* ===== UI 逻辑 ===== */
+let mode='S',files=[],resCanvas=null;
+const $=id=>document.getElementById(id);
+
+function setMode(m){
+  mode=m;$('tabS').classList.toggle('on',m==='S');$('tabB').classList.toggle('on',m==='B');
+  $('fi').multiple=m==='B';files=[];resCanvas=null;
+  $('dz').classList.remove('ok');$('fn').textContent='';$('fn').style.display='none';
+  $('fl').innerHTML='';$('pc').style.display='none';$('dl').style.display='none';
+  $('go').disabled=true;hideMsg();$('pr').style.display='none';
+}
+$('tabS').onclick=()=>'S'!==mode&&setMode('S');
+$('tabB').onclick=()=>'B'!==mode&&setMode('B');
+
+function pickFiles(f){
+  if(!f||!f.length)return;
+  files=mode==='S'?f.slice(0,1):Array.from(f);
+  $('dz').classList.add('ok');
+  if(mode==='S'){$('fn').textContent=files[0].name}
+  else{$('fn').textContent='已选 '+files.length+' 个文件';renderFL()}
+  $('fn').style.display='block';$('go').disabled=false;resCanvas=null;
+  $('pc').style.display='none';$('dl').style.display='none';
+}
+$('fi').addEventListener('change',e=>pickFiles(e.target.files));
+
+const dz=$('dz');
+['dragenter','dragover'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.add('over')}));
+['dragleave','drop'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.remove('over')}));
+dz.addEventListener('drop',e=>{const f=Array.from(e.dataTransfer.files).filter(x=>x.type.startsWith('image/'));pickFiles(f)});
+
+function renderFL(){
+  $('fl').innerHTML=files.map((f,i)=>'<div class="fi"><span class="nm">'+f.name+'</span><span class="dt w" id="d'+i+'"></span></div>').join('');
+}
+
+$('go').addEventListener('click',async()=>{
+  if(!files.length)return;
+  const pwd=$('pwd').value,bs=parseInt($('bs').value)||16;
+  if(bs<1||bs>256){showMsg('块大小需在 1~256 之间','er');return}
+  $('go').disabled=true;$('go').innerHTML='<span class="sp"></span>解密中…';
+  $('pr').style.display='block';$('pb').style.width='0%';hideMsg();
+  if(mode==='S')await doSingle(pwd,bs);else await doBatch(pwd,bs);
+  $('go').innerHTML='开始解密';$('go').disabled=false;
+});
+
+async function doSingle(pwd,bs){
+  try{
+    const img=await loadImg(files[0]);
+    resCanvas=await decrypt(img,pwd,bs,p=>{$('pb').style.width=(p*100).toFixed(0)+'%'});
+    $('pb').style.width='100%';showMsg('解密完成！','ok');
+    $('iO').src=img.src;$('iD').src=resCanvas.toDataURL('image/png');
+    $('pc').style.display='';$('dl').style.display='';
+    $('dl').onclick=()=>dlCanvas(resCanvas,files[0].name,bs);
+  }catch(e){showMsg('解密失败: '+e.message,'er');$('pr').style.display='none'}
+}
+
+async function doBatch(pwd,bs){
+  let ok=0;
+  for(let i=0;i<files.length;i++){
+    try{const img=await loadImg(files[i]);const c=await decrypt(img,pwd,bs,null);dlCanvas(c,files[i].name,bs);ok++;$('d'+i).className='dt s'}
+    catch(e){$('d'+i).className='dt e'}
+    $('pb').style.width=((i+1)/files.length*100).toFixed(0)+'%';
+    await new Promise(r=>setTimeout(r,200));
+  }
+  showMsg('批量处理完成：'+ok+'/'+files.length+' 成功','ok');
+  setTimeout(()=>$('pr').style.display='none',1500);
+}
+
+function loadImg(file){
+  return new Promise((ok,no)=>{
+    const r=new FileReader();
+    r.onload=()=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error('图像加载失败'));i.src=r.result};
+    r.onerror=()=>no(new Error('文件读取失败'));r.readAsDataURL(file);
+  });
+}
+
+function dlCanvas(cv,name,bs){
+  const base=name.replace(/\.[^.]+$/,'');
+  cv.toBlob(blob=>{const u=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=u;a.download=base+'_解密_'+bs+'.png';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(u),1000)},'image/png');
+}
+
+function showMsg(t,c){const m=$('ms');m.textContent=t;m.className='msg v '+c}
+function hideMsg(){$('ms').className='msg'}
+</script>
+</body>
+</html>
