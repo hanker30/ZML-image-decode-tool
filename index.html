@@ -1,19 +1,913 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0a0a14" />
-    <title>解密工具 · 高速版</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#0a0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>解密工具 · 高速版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a14;--surface:#101020;--card:#16162c;--border:#222240;--accent:#e8a838;--accent-hover:#f0b848;--text:#e4e4ec;--text2:#9090a8;--text3:#585878;--ok:#3ddc84;--err:#ff6b6b;--r:14px;--rs:8px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:'Source Serif 4','Noto Sans SC','PingFang SC',-apple-system,sans-serif;background:var(--bg);background-image:radial-gradient(ellipse at 20% 0%,rgba(232,168,56,.03) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(80,80,200,.02) 0%,transparent 50%);color:var(--text);min-height:100dvh;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;opacity:.02;pointer-events:none;z-index:10000;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+#app{max-width:520px;margin:0 auto;padding:28px 20px 60px}
+.header{text-align:center;margin-bottom:36px;animation:fadeUp .6s ease}
+.app-title{font-family:'Syne',sans-serif;font-size:2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.app-desc{font-size:.85rem;color:var(--text3);letter-spacing:.05em}
+.badge{display:inline-block;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:.68rem;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--accent);background:rgba(232,168,56,.06)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:16px;animation:fadeUp .5s ease}
+.upload-card{cursor:pointer;border:2px dashed var(--border);text-align:center;padding:40px 24px;transition:all .3s ease}
+.upload-card:hover,.upload-card.drag{border-color:var(--accent);background:rgba(232,168,56,.04)}
+.upload-icon{color:var(--text3);margin-bottom:16px;transition:color .3s}
+.upload-card:hover .upload-icon{color:var(--accent)}
+.upload-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:600;margin-bottom:4px}
+.upload-hint{font-size:.8rem;color:var(--text3)}
+.files-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.files-count{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--accent)}
+.files-clear{background:none;border:none;color:var(--text3);font-size:.8rem;cursor:pointer;padding:4px 8px;border-radius:4px}
+.files-clear:hover{color:var(--err);background:rgba(255,107,107,.1)}
+.files-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
+.file-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:var(--rs);font-size:.85rem}
+.file-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0}
+.file-thumb-vid{width:36px;height:36px;border-radius:6px;background:rgba(61,220,132,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.file-thumb-vid svg{width:16px;height:16px;color:var(--ok);opacity:.7}
+.file-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.file-tag{font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:2px 7px;border-radius:3px;flex-shrink:0;letter-spacing:.04em}
+.tag-img{color:var(--accent);background:rgba(232,168,56,.1)}
+.tag-vid{color:var(--ok);background:rgba(61,220,132,.1)}
+.file-rm{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:1.1rem;line-height:1}
+.file-rm:hover{color:var(--err)}
+.settings-hd{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;color:var(--text2);font-size:.9rem;cursor:pointer;padding:0}
+.arrow{transition:transform .3s}
+.arrow.open{transform:rotate(180deg)}
+.settings-bd{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:14px}
+.srow{display:flex;flex-direction:column;gap:6px}
+.srow label{font-size:.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:'JetBrains Mono',monospace}
+.srow input{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:.95rem;padding:10px 14px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .2s}
+.srow input:focus{border-color:var(--accent)}
+.srow .hint{font-size:.7rem;color:var(--text3);margin-top:2px}
+.seg{display:flex;gap:8px;margin-top:4px}
+.seg button{flex:1;padding:9px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:.82rem;cursor:pointer;transition:all .2s;font-family:'JetBrains Mono',monospace}
+.seg button.on{border-color:var(--accent);color:var(--accent);background:rgba(232,168,56,.08)}
+.act-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:var(--accent);color:#0a0a14;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:16px;animation:fadeUp .5s ease .15s both}
+.act-btn:hover:not(:disabled){background:var(--accent-hover);transform:translateY(-1px)}
+.act-btn:disabled{opacity:.3;cursor:not-allowed}
+.act-btn .spinner{display:none;width:18px;height:18px;border:2.5px solid transparent;border-top-color:#0a0a14;border-radius:50%;animation:spin .6s linear infinite}
+.act-btn.loading .spinner{display:block}
+.act-btn.loading .bt{opacity:.6}
+.prg-card{animation:fadeUp .3s ease}
+.prg-track{width:100%;height:6px;background:var(--surface);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.prg-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-hover));border-radius:3px;transition:width .3s}
+.prg-label{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text3);text-align:center}
+.res-hd{margin-bottom:16px}
+.res-hd h2{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:600;color:var(--ok)}
+.res-list{display:flex;flex-direction:column;gap:14px;margin-bottom:20px}
+.res-item{border-radius:var(--rs);overflow:hidden;background:var(--surface);animation:fadeUp .4s ease both}
+.res-item:nth-child(2){animation-delay:.08s}
+.res-item:nth-child(3){animation-delay:.16s}
+.res-item:nth-child(4){animation-delay:.24s}
+.res-item img{width:100%;display:block;cursor:zoom-in}
+.res-item video{width:100%;display:block;background:#000;max-height:260px}
+.res-bar{padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.res-fn{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:48%}
+.res-info{display:flex;align-items:center;gap:6px}
+.res-dl{background:none;border:1px solid var(--accent);color:var(--accent);padding:5px 14px;border-radius:var(--rs);font-size:.78rem;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+.res-dl:hover{background:var(--accent);color:#0a0a14}
+.res-err{padding:20px;color:var(--err);font-size:.9rem}
+.res-acts{display:flex;gap:12px}
+.dl-all,.reset-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:var(--rs);font-size:.9rem;cursor:pointer;transition:all .2s;border:none;font-weight:500}
+.dl-all{background:var(--accent);color:#0a0a14;font-family:'Syne',sans-serif;font-weight:600}
+.reset-btn{background:var(--surface);color:var(--text2);border:1px solid var(--border)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:99999;cursor:zoom-out;animation:fadeIn .2s}
+.modal img{max-width:95%;max-height:95%;object-fit:contain}
+.warn-card{border-color:rgba(255,107,107,.4)!important}
+.warn-card p{color:var(--err);font-size:.85rem;text-align:center}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="header">
+    <h1 class="app-title">解密工具</h1>
+    <p class="app-desc">基于块置换算法 · 图片 & 视频 · 兼容 Python 端加密</p>
+    <span class="badge" id="engineBadge">检测中…</span>
+  </header>
+
+  <div id="warnBox"></div>
+
+  <div class="card upload-card" id="dropzone">
+    <input type="file" id="fileIn" accept="image/*,video/*" multiple hidden>
+    <div class="upload-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <p class="upload-title">选择加密文件</p>
+    <p class="upload-hint">支持图片和视频 · 点击或拖拽 · 可批量处理</p>
+  </div>
+
+  <div class="card" id="filesCard" style="display:none">
+    <div class="files-hd">
+      <span class="files-count" id="fCnt"></span>
+      <button class="files-clear" id="fClr">清除全部</button>
+    </div>
+    <div class="files-list" id="fList"></div>
+  </div>
+
+  <div class="card">
+    <button class="settings-hd" id="setTog">
+      <span>高级设置</span>
+      <svg class="arrow" id="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="settings-bd" id="setBd" style="display:none">
+      <div class="srow">
+        <label>解密密码</label>
+        <input type="text" id="pw" value="在梦里w" spellcheck="false">
+      </div>
+      <div class="srow">
+        <label>块大小 (px)</label>
+        <input type="number" id="bs" value="16" min="2" max="256">
+      </div>
+      <div class="srow" id="fmtRow">
+        <label>输出格式（视频）</label>
+        <div class="seg">
+          <button class="on" id="fmtMp4">MP4 (H.264)</button>
+          <button id="fmtWebm">WebM (VP9)</button>
+        </div>
+        <span class="hint">MP4 兼容性更好；如编码失败会自动回退</span>
+      </div>
+      <div class="srow">
+        <label>视频帧率 (fps)</label>
+        <input type="number" id="fpsIn" value="30" min="1" max="120">
+        <span class="hint" id="fpsHint">应与加密时一致，默认 30</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="act-btn" id="goBtn" disabled>
+    <span class="spinner"></span>
+    <span class="bt">开始解密</span>
+  </button>
+
+  <div class="card prg-card" id="prgCard" style="display:none">
+    <div class="prg-track"><div class="prg-bar" id="prgBar"></div></div>
+    <p class="prg-label" id="prgLbl">准备中...</p>
+  </div>
+
+  <div class="card" id="resCard" style="display:none">
+    <div class="res-hd"><h2>解密完成</h2></div>
+    <div class="res-list" id="resList"></div>
+    <div class="res-acts">
+      <button class="dl-all" id="dlAll">全部下载</button>
+      <button class="reset-btn" id="rstBtn">继续处理</button>
+    </div>
+  </div>
+</div>
+
+<!-- mp4-muxer & webm-muxer 从 CDN 加载，给全局变量 Mp4Muxer / WebMMuxer -->
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/webm-muxer@5.1.4/build/webm-muxer.js"></script>
+
+<script>
+// ======================================================
+// Python 兼容 Mersenne Twister (MT19937)
+// ======================================================
+
+class MT19937 {
+  constructor(){this.N=624;this.M=397;this.mt=new Uint32Array(this.N);this.mti=this.N+1;}
+  init_genrand(s){
+    this.mt[0]=s>>>0;
+    for(let i=1;i<this.N;i++)this.mt[i]=(Math.imul(this.mt[i-1]^this.mt[i-1]>>>30,1812433253)+i)>>>0;
+    this.mti=this.N;
+  }
+  init_by_array(key){
+    this.init_genrand(19650218);let i=1,j=0,k=Math.max(this.N,key.length);
+    for(;k>0;k--){let s=this.mt[i-1]^this.mt[i-1]>>>30;this.mt[i]=((this.mt[i]^Math.imul(s,1664525))+key[j]+j)>>>0;i++;j++;if(i>=this.N){this.mt[0]=this.mt[this.N-1];i=1;}if(j>=key.length)j=0;}
+    for(k=this.N-1;k>0;k--){let s=this.mt[i-1]^this.mt[i-1]>>>30;this.mt[i]=((this.mt[i]^Math.imul(s,1566083941))-i)>>>0;i++;if(i>=this.N){this.mt[0]=this.mt[this.N-1];i=1;}}
+    this.mt[0]=0x80000000;
+  }
+  genrand_int32(){
+    let y;const m=[0,0x9908b0df];
+    if(this.mti>=this.N){let kk;for(kk=0;kk<this.N-this.M;kk++){y=(this.mt[kk]&0x80000000)|(this.mt[kk+1]&0x7fffffff);this.mt[kk]=(this.mt[kk+this.M]^(y>>>1)^m[y&1])>>>0;}for(;kk<this.N-1;kk++){y=(this.mt[kk]&0x80000000)|(this.mt[kk+1]&0x7fffffff);this.mt[kk]=(this.mt[kk+(this.M-this.N)]^(y>>>1)^m[y&1])>>>0;}y=(this.mt[this.N-1]&0x80000000)|(this.mt[0]&0x7fffffff);this.mt[this.N-1]=(this.mt[this.M-1]^(y>>>1)^m[y&1])>>>0;this.mti=0;}
+    y=this.mt[this.mti++];y^=y>>>11;y^=y<<7&0x9d2c5680;y^=y<<15&0xefc60000;y^=y>>>18;return y>>>0;
+  }
+}
+
+class PyRandom {
+  constructor(){this.mt=new MT19937();}
+  async seed(pw){
+    const enc=new TextEncoder(),pb=enc.encode(pw),hb=new Uint8Array(await crypto.subtle.digest('SHA-512',pb)),cb=new Uint8Array(pb.length+hb.length);
+    cb.set(pb);cb.set(hb,pb.length);let bi=0n;for(const b of cb)bi=(bi<<8n)|BigInt(b);
+    const w=[];let t=bi;while(t>0n){w.push(Number(t&0xFFFFFFFFn));t>>=32n;}if(!w.length)w.push(0);
+    this.mt.init_by_array(w);
+  }
+  getrandbits(k){return k<=0?0:this.mt.genrand_int32()>>>(32-k);}
+  _randbelow(n){if(n<=1)return 0;const k=32-Math.clz32(n);while(true){const r=this.getrandbits(k);if(r<n)return r;}}
+  shuffle(a){for(let i=a.length-1;i>0;i--){const j=this._randbelow(i+1);const t=a[i];a[i]=a[j];a[j]=t;}}
+}
+
+async function computeInverseMap(pw, nb) {
+  var rng = new PyRandom(); await rng.seed(pw);
+  var si = Array.from({length:nb}, function(_,i){return i;});
+  rng.shuffle(si);
+  var inv = new Int32Array(nb);
+  for (var o = 0; o < nb; o++) inv[si[o]] = o;
+  return inv;
+}
+
+// ======================================================
+// 高速块反置换（像素级 TypedArray 拷贝，替代逐块 drawImage）
+// ======================================================
+
+function permuteBlocks(src, dst, nw, bs, nc, nb, inv) {
+  var rowBytes = nw * 4;
+  var blockRowBytes = bs * 4;
+  for (var p = 0; p < nb; p++) {
+    var op = inv[p];
+    var sCol = (p % nc) * bs, sRow = (p / nc | 0) * bs;
+    var dCol = (op % nc) * bs, dRow = (op / nc | 0) * bs;
+    var sOff = sRow * rowBytes + sCol * 4;
+    var dOff = dRow * rowBytes + dCol * 4;
+    for (var y = 0; y < bs; y++) {
+      dst.set(src.subarray(sOff, sOff + blockRowBytes), dOff);
+      sOff += rowBytes;
+      dOff += rowBytes;
+    }
+  }
+}
+
+// ======================================================
+// 浏览器兼容性检查
+// ======================================================
+
+var HAS_WEBCODECS = (typeof VideoEncoder !== 'undefined' && typeof VideoFrame !== 'undefined');
+var HAS_MEDIARECORDER = (typeof MediaRecorder !== 'undefined');
+var HAS_RVFC = ('requestVideoFrameCallback' in HTMLVideoElement.prototype);
+
+(function(){
+  var w = document.getElementById('warnBox'), iss = [];
+  if (!window.crypto || !window.crypto.subtle) iss.push('Web Crypto');
+  if (!HAS_WEBCODECS && !HAS_MEDIARECORDER) iss.push('WebCodecs / MediaRecorder');
+  if (iss.length) w.innerHTML = '<div class="card warn-card"><p>您的浏览器缺少：' + iss.join('、') + '。<br>请使用最新版 <b>Chrome</b> 或 <b>Edge</b>。</p></div>';
+  var badge = document.getElementById('engineBadge');
+  badge.textContent = HAS_WEBCODECS ? '⚡ WebCodecs 全速引擎' : '⚙ MediaRecorder 引擎';
+  if (!HAS_WEBCODECS) document.getElementById('fmtRow').style.display = 'none';
+  if (HAS_WEBCODECS) document.getElementById('fpsHint').textContent = 'WebCodecs 模式自动保留原始帧率，此项仅回退模式需要';
+})();
+
+// ======================================================
+// 工具函数
+// ======================================================
+
+function isVideo(f) { return f.type.startsWith('video/'); }
+
+function loadImage(file) {
+  return new Promise(function(res, rej) {
+    var r = new FileReader();
+    r.onload = function(e) { var im = new Image(); im.onload = function(){ res(im); }; im.onerror = function(){ rej(new Error('图片解码失败')); }; im.src = e.target.result; };
+    r.onerror = function() { rej(new Error('文件读取失败')); };
+    r.readAsDataURL(file);
+  });
+}
+
+function loadVideo(file) {
+  return new Promise(function(res, rej) {
+    var v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.src = URL.createObjectURL(file); var done = false;
+    v.onloadeddata = function() { if (!done) { done = true; res(v); } };
+    v.onerror = function() { if (!done) { done = true; rej(new Error('视频加载失败')); } };
+    setTimeout(function() { if (!done) { done = true; rej(new Error('视频加载超时')); } }, 15000);
+  });
+}
+
+function getSupportedMime() {
+  var t = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  for (var i = 0; i < t.length; i++) if (MediaRecorder.isTypeSupported(t[i])) return t[i];
+  return '';
+}
+
+// ======================================================
+// 核心：图片解密（像素级，无损，快速）
+// ======================================================
+
+async function decryptImg(img, pw, bs, onPrg) {
+  var ow = img.naturalWidth || img.width, oh = img.naturalHeight || img.height;
+  var nw = Math.floor(ow / bs) * bs, nh = Math.floor(oh / bs) * bs;
+  if (!nw || !nh) throw new Error('图像尺寸小于块大小');
+  var ox = Math.floor((ow - nw) / 2), oy = Math.floor((oh - nh) / 2);
+  var nc = nw / bs, nr = nh / bs, nb = nr * nc;
+
+  var sc = document.createElement('canvas'); sc.width = nw; sc.height = nh;
+  var sx = sc.getContext('2d', {willReadFrequently: true});
+  sx.fillStyle = '#fff'; sx.fillRect(0, 0, nw, nh);
+  sx.drawImage(img, ox, oy, nw, nh, 0, 0, nw, nh);
+
+  var inv = await computeInverseMap(pw, nb);
+  onPrg && onPrg(0.3);
+
+  var srcData = sx.getImageData(0, 0, nw, nh);
+  var dstData = sx.createImageData(nw, nh);
+  permuteBlocks(srcData.data, dstData.data, nw, bs, nc, nb, inv);
+  onPrg && onPrg(0.9);
+
+  var dc = document.createElement('canvas'); dc.width = nw; dc.height = nh;
+  var dx = dc.getContext('2d');
+  dx.putImageData(dstData, 0, 0);
+  onPrg && onPrg(1);
+  return dc;
+}
+
+// ======================================================
+// WebCodecs 编解码探测
+// ======================================================
+
+async function pickAvcConfig(w, h, br) {
+  var cs = ['avc1.640028','avc1.4d4028','avc1.42e028','avc1.42001f'];
+  for (var i = 0; i < cs.length; i++) {
+    try {
+      var s = await VideoEncoder.isConfigSupported({codec:cs[i],width:w,height:h,bitrate:br});
+      if (s && s.supported) return cs[i];
+    } catch(e){}
+  }
+  return null;
+}
+async function pickVp9Config(w, h, br) {
+  var cs = ['vp09.00.40.08','vp09.00.10.08'];
+  for (var i = 0; i < cs.length; i++) {
+    try {
+      var s = await VideoEncoder.isConfigSupported({codec:cs[i],width:w,height:h,bitrate:br});
+      if (s && s.supported) return cs[i];
+    } catch(e){}
+  }
+  return null;
+}
+
+// ======================================================
+// 音频探测与编码（关键修复：先解码得到信息再创建 muxer）
+// ======================================================
+
+async function probeAudio(file, useMp4) {
+  if (typeof AudioEncoder === 'undefined' || typeof AudioData === 'undefined') return null;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  var buf;
+  try {
+    var raw = await file.arrayBuffer();
+    var ac = new AC();
+    buf = await ac.decodeAudioData(raw.slice(0));
+    ac.close().catch(function(){});
+  } catch(e) { return null; }
+  var numCh = buf.numberOfChannels, sr = buf.sampleRate, len = buf.length;
+  if (!numCh || !len) return null;
+
+  // MP4 优先 AAC，如果 AAC 不行则退回 Opus（forceWebm）
+  var candidates = useMp4
+    ? [{enc:'mp4a.40.2', mux:'aac', force:false}, {enc:'opus', mux:'A_OPUS', force:true}]
+    : [{enc:'opus', mux:'A_OPUS', force:false}];
+
+  for (var i = 0; i < candidates.length; i++) {
+    var c = candidates[i];
+    try {
+      var sup = await AudioEncoder.isConfigSupported({codec:c.enc, sampleRate:sr, numberOfChannels:numCh, bitrate:192000});
+      if (sup && sup.supported) return {audioBuffer:buf, numCh:numCh, sampleRate:sr, length:len, encoderCodec:c.enc, muxerCodec:c.mux, forceWebm:c.force};
+    } catch(e){}
+  }
+  return null;
+}
+
+async function encodeAudioToMuxer(dec, muxer) {
+  return new Promise(function(resolve) {
+    var produced = false, errored = false;
+    var enc = new AudioEncoder({
+      output: function(chunk, meta) {
+        try { muxer.addAudioChunk(chunk, meta); produced = true; }
+        catch(e) { errored = true; }
+      },
+      error: function() { errored = true; }
+    });
+    try {
+      enc.configure({codec:dec.encoderCodec, sampleRate:dec.sampleRate, numberOfChannels:dec.numCh, bitrate:192000});
+    } catch(e) { resolve(false); return; }
+
+    var chunkFrames = 8192, channelData = [];
+    for (var c = 0; c < dec.numCh; c++) channelData.push(dec.audioBuffer.getChannelData(c));
+
+    (async function() {
+      try {
+        for (var pos = 0; pos < dec.length; pos += chunkFrames) {
+          if (errored) break;
+          var frames = Math.min(chunkFrames, dec.length - pos);
+          var planar = new Float32Array(frames * dec.numCh);
+          for (var c = 0; c < dec.numCh; c++) {
+            planar.set(channelData[c].subarray(pos, pos + frames), c * frames);
+          }
+          var ts = Math.round((pos / dec.sampleRate) * 1000000);
+          var ad = new AudioData({format:'f32-planar', sampleRate:dec.sampleRate, numberOfFrames:frames, numberOfChannels:dec.numCh, timestamp:ts, data:planar});
+          enc.encode(ad);
+          ad.close();
+        }
+        await enc.flush();
+        resolve(produced && !errored);
+      } catch(e) { resolve(false); }
+    })();
+  });
+}
+
+// ======================================================
+// 核心：视频解密 — WebCodecs 全速引擎
+// 关键优化：
+//  1. 像素级块置换，无 JPEG 中转
+//  2. WebCodecs 编码 → 非实时全速，无需等待
+//  3. 单遍流水线，恒定内存占用
+//  4. 音频先解码探测 → muxer 声明音频轨 → 编码混入
+// ======================================================
+
+async function decryptVideoWebCodecs(file, password, blockSize, preferMp4, onProgress) {
+  // 探测视频尺寸
+  var videoEl = await loadVideo(file);
+  var vw = videoEl.videoWidth, vh = videoEl.videoHeight;
+  var nw = Math.floor(vw / blockSize) * blockSize, nh = Math.floor(vh / blockSize) * blockSize;
+  if (!nw || !nh) throw new Error('视频尺寸小于块大小');
+  var cropX = Math.floor((vw - nw) / 2), cropY = Math.floor((vh - nh) / 2);
+  var nc = nw / blockSize, nr = nh / blockSize, nb = nr * nc;
+  var duration = videoEl.duration;
+  var guessFps = 30;
+  var estTotal = (isFinite(duration) && duration > 0) ? Math.ceil(duration * guessFps) : 0;
+
+  onProgress('准备置换映射', 0, 1, '');
+  var inv = await computeInverseMap(password, nb);
+
+  // 工作画布
+  var work = document.createElement('canvas'); work.width = nw; work.height = nh;
+  var wctx = work.getContext('2d', {willReadFrequently:true, alpha:false});
+  var out = document.createElement('canvas'); out.width = nw; out.height = nh;
+  var octx = out.getContext('2d', {alpha:false});
+  var dstBuf = wctx.createImageData(nw, nh);
+
+  // 估算码率（高质量）
+  var bitrate = Math.max(Math.round(nw * nh * guessFps * 0.12), 4000000);
+
+  // 视频编码器
+  var useMp4 = preferMp4;
+  var codec = null;
+  if (useMp4) { codec = await pickAvcConfig(nw, nh, bitrate); if (!codec) useMp4 = false; }
+  if (!useMp4) { codec = await pickVp9Config(nw, nh, bitrate); if (!codec) throw new Error('浏览器不支持 H.264/VP9 编码'); }
+
+  // 音频探测（必须在建 muxer 之前）
+  onProgress('探测音频', 0, 1, '');
+  var audioInfo = null;
+  try { audioInfo = await probeAudio(file, useMp4); } catch(e) {}
+
+  // 如果 AAC 不支持但有 Opus，切 WebM 容器（保留声音）
+  if (audioInfo && audioInfo.forceWebm && useMp4) {
+    var vp9 = await pickVp9Config(nw, nh, bitrate);
+    if (vp9) { useMp4 = false; codec = vp9; }
+    else { audioInfo = null; } // 放弃音频保 MP4 视频
+  }
+
+  var ext = useMp4 ? 'mp4' : 'webm';
+
+  // 创建 muxer（此时声明音频轨！）
+  var muxer;
+  if (useMp4) {
+    var mp4Opts = {
+      target: new Mp4Muxer.ArrayBufferTarget(),
+      video: {codec:'avc', width:nw, height:nh},
+      fastStart: 'in-memory',
+      firstTimestampBehavior: 'offset'
+    };
+    if (audioInfo) mp4Opts.audio = {codec:'aac', numberOfChannels:audioInfo.numCh, sampleRate:audioInfo.sampleRate};
+    muxer = new Mp4Muxer.Muxer(mp4Opts);
+  } else {
+    var webmOpts = {
+      target: new WebMMuxer.ArrayBufferTarget(),
+      video: {codec:'V_VP9', width:nw, height:nh},
+      firstTimestampBehavior: 'offset'
+    };
+    if (audioInfo) webmOpts.audio = {codec:'A_OPUS', numberOfChannels:audioInfo.numCh, sampleRate:audioInfo.sampleRate};
+    muxer = new WebMMuxer.Muxer(webmOpts);
+  }
+
+  // 视频编码器
+  var encError = null;
+  var encoder = new VideoEncoder({
+    output: function(chunk, meta) { muxer.addVideoChunk(chunk, meta); },
+    error: function(e) { encError = e; }
+  });
+  encoder.configure({codec:codec, width:nw, height:nh, bitrate:bitrate, latencyMode:'quality'});
+
+  // 解密循环
+  var frameCount = 0, t0 = performance.now();
+
+  function processFrame(mediaTimeSec) {
+    wctx.drawImage(videoEl, cropX, cropY, nw, nh, 0, 0, nw, nh);
+    var srcData = wctx.getImageData(0, 0, nw, nh);
+    permuteBlocks(srcData.data, dstBuf.data, nw, blockSize, nc, nb, inv);
+    octx.putImageData(dstBuf, 0, 0);
+
+    var tsMicro = Math.max(0, Math.round(mediaTimeSec * 1000000));
+    var frame = new VideoFrame(out, {timestamp: tsMicro});
+    encoder.encode(frame, {keyFrame: frameCount % 60 === 0});
+    frame.close();
+    frameCount++;
+
+    var elapsed = (performance.now() - t0) / 1000;
+    var speed = frameCount / Math.max(elapsed, 0.001);
+    var totalForPct = estTotal || frameCount;
+    var extra = '';
+    if (estTotal && frameCount > 4) {
+      var eta = Math.max(0, Math.ceil((estTotal - frameCount) / Math.max(speed, 0.1)));
+      extra = ' · ' + speed.toFixed(0) + ' fps · 剩余约 ' + eta + 's';
+    }
+    onProgress('解密+编码', frameCount, totalForPct, extra);
+  }
+
+  // 用 rVFC + 加速播放 抽帧
+  await new Promise(function(resolve, reject) {
+    if (HAS_RVFC) {
+      var step = function(_now, metadata) {
+        if (encError) { reject(encError); return; }
+        try { processFrame(metadata.mediaTime); } catch(e) { reject(e); return; }
+        if (videoEl.ended || (duration && videoEl.currentTime >= duration - 0.001)) { resolve(); return; }
+        videoEl.requestVideoFrameCallback(step);
+      };
+      videoEl.requestVideoFrameCallback(step);
+      videoEl.onended = function() { resolve(); };
+      try { videoEl.preservesPitch = false; videoEl.playbackRate = 4; } catch(e) {}
+      videoEl.play().catch(function(e) { reject(new Error('播放失败: ' + e.message)); });
+    } else {
+      // 回退：逐帧 seek
+      var total = estTotal || Math.ceil((duration || 0) * guessFps);
+      var fi = 0;
+      function seekTo(t) {
+        return new Promise(function(res) {
+          var done = false;
+          function fin() { if (!done) { done = true; res(); } }
+          videoEl.onseeked = fin;
+          videoEl.currentTime = t;
+          setTimeout(fin, 4000);
+        });
+      }
+      (async function() {
+        try {
+          for (fi = 0; fi < total; fi++) {
+            if (encError) throw encError;
+            await seekTo(fi / guessFps);
+            processFrame(fi / guessFps);
+            if (fi % 4 === 0) await new Promise(function(r) { setTimeout(r, 0); });
+          }
+          resolve();
+        } catch(e) { reject(e); }
+      })();
+    }
+  });
+
+  videoEl.pause();
+  URL.revokeObjectURL(videoEl.src);
+  await encoder.flush();
+  if (encError) throw encError;
+
+  // 音频编码并混入 muxer
+  var hasAudio = false;
+  if (audioInfo) {
+    onProgress('混流音频', 1, 1, '');
+    try { hasAudio = await encodeAudioToMuxer(audioInfo, muxer); } catch(e) { hasAudio = false; }
+  }
+
+  muxer.finalize();
+  var buffer = muxer.target.buffer;
+  var mime = useMp4 ? 'video/mp4' : 'video/webm';
+  return { blob: new Blob([buffer], {type:mime}), filename: file.name.replace(/\.[^.]+$/,'') + '_解密.' + ext, hasAudio:hasAudio, engine:'WebCodecs' };
+}
+
+// ======================================================
+// 核心：视频解密 — MediaRecorder 回退
+// 优化：单遍像素级置换，无 JPEG 中转，恒定内存
+// ======================================================
+
+async function decryptVideoMediaRecorder(file, password, blockSize, fps, onProgress) {
+  var videoEl = await loadVideo(file);
+  var vw = videoEl.videoWidth, vh = videoEl.videoHeight;
+  var nw = Math.floor(vw / blockSize) * blockSize, nh = Math.floor(vh / blockSize) * blockSize;
+  if (!nw || !nh) throw new Error('视频尺寸小于块大小');
+  var cropX = Math.floor((vw - nw) / 2), cropY = Math.floor((vh - nh) / 2);
+  var nc = nw / blockSize, nr = nh / blockSize, nb = nr * nc;
+  var duration = videoEl.duration;
+  var total = (isFinite(duration) && duration > 0) ? Math.ceil(duration * fps) : 0;
+
+  var inv = await computeInverseMap(password, nb);
+
+  var work = document.createElement('canvas'); work.width = nw; work.height = nh;
+  var wctx = work.getContext('2d', {willReadFrequently:true, alpha:false});
+  var out = document.createElement('canvas'); out.width = nw; out.height = nh;
+  var octx = out.getContext('2d', {alpha:false});
+  var dstBuf = wctx.createImageData(nw, nh);
+
+  // 音频
+  var hasAudio = false;
+  var canvasStream = out.captureStream(fps);
+  var combined = canvasStream;
+  var audioEl = null, audioCtx = null;
+  try {
+    audioEl = document.createElement('video');
+    audioEl.src = URL.createObjectURL(file);
+    audioEl.muted = false;
+    await Promise.race([
+      new Promise(function(res, rej) { audioEl.onloadeddata = res; audioEl.onerror = rej; }),
+      new Promise(function(res) { setTimeout(res, 5000); })
+    ]);
+    if (audioEl.readyState >= 2 && audioEl.duration > 0) {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = ctx;
+      await ctx.resume();
+      var src = ctx.createMediaElementSource(audioEl);
+      var dst = ctx.createMediaStreamDestination();
+      src.connect(dst);
+      var at = dst.stream.getAudioTracks(), vt = canvasStream.getVideoTracks();
+      if (at.length && vt.length) { combined = new MediaStream([vt[0], at[0]]); hasAudio = true; }
+    }
+  } catch(e) { hasAudio = false; }
+
+  var mime = getSupportedMime();
+  if (!mime) throw new Error('浏览器不支持 WebM 录制');
+  var br = Math.max(nw * nh * fps * 0.12, 4000000);
+  var recorder = new MediaRecorder(combined, {mimeType:mime, videoBitsPerSecond:br});
+  var chunks = [];
+  recorder.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
+
+  var t0 = performance.now(), count = 0;
+
+  function renderFrame() {
+    wctx.drawImage(videoEl, cropX, cropY, nw, nh, 0, 0, nw, nh);
+    var srcData = wctx.getImageData(0, 0, nw, nh);
+    permuteBlocks(srcData.data, dstBuf.data, nw, blockSize, nc, nb, inv);
+    octx.putImageData(dstBuf, 0, 0);
+    count++;
+    var elapsed = (performance.now() - t0) / 1000;
+    var speed = count / Math.max(elapsed, 0.001);
+    var extra = '';
+    if (total && count > 4) {
+      var eta = Math.max(0, Math.ceil((total - count) / Math.max(speed, 0.1)));
+      extra = ' · 剩余约 ' + eta + 's';
+    }
+    onProgress('解密+录制', count, total || count, extra);
+  }
+
+  return await new Promise(function(resolve, reject) {
+    var settled = false;
+    recorder.onstop = function() {
+      if (audioEl) { audioEl.pause(); try { URL.revokeObjectURL(audioEl.src); } catch(e){} }
+      if (audioCtx) try { audioCtx.close(); } catch(e){}
+      try { URL.revokeObjectURL(videoEl.src); } catch(e){}
+      resolve({ blob: new Blob(chunks, {type:mime}), filename: file.name.replace(/\.[^.]+$/,'') + '_解密.webm', hasAudio:hasAudio, engine:'MediaRecorder' });
+    };
+    recorder.onerror = function() { if (!settled) { settled = true; reject(new Error('录制出错')); } };
+    try { recorder.start(200); } catch(e) { reject(new Error('录制启动失败')); return; }
+    if (hasAudio && audioEl) { audioEl.currentTime = 0; audioEl.play().catch(function(){}); }
+
+    if (HAS_RVFC) {
+      var step = function() {
+        if (settled) return;
+        renderFrame();
+        if (videoEl.ended || (duration && videoEl.currentTime >= duration - 0.001)) {
+          settled = true; setTimeout(function(){ recorder.stop(); }, 300); return;
+        }
+        videoEl.requestVideoFrameCallback(step);
+      };
+      videoEl.requestVideoFrameCallback(step);
+      videoEl.onended = function() { if (!settled) { settled = true; setTimeout(function(){ recorder.stop(); }, 300); } };
+      videoEl.play().catch(function(e){ reject(new Error('播放失败')); });
+    } else {
+      var seekTo = function(t) {
+        return new Promise(function(res) {
+          var done = false;
+          function fin() { if (!done) { done = true; res(); } }
+          videoEl.onseeked = fin; videoEl.currentTime = t; setTimeout(fin, 4000);
+        });
+      };
+      var frameInterval = 1000 / fps;
+      var startTime = performance.now();
+      (async function() {
+        for (var fi = 0; fi < (total || 0); fi++) {
+          if (settled) return;
+          await seekTo(fi / fps);
+          renderFrame();
+          var target = fi * frameInterval, el = performance.now() - startTime;
+          if (target > el) await new Promise(function(r){ setTimeout(r, target - el); });
+        }
+        settled = true; setTimeout(function(){ recorder.stop(); }, 300);
+      })();
+    }
+  });
+}
+
+// ======================================================
+// UI 逻辑
+// ======================================================
+
+var $ = function(id) { return document.getElementById(id); };
+var files = [], results = [], resultUrls = [];
+var preferMp4 = true;
+
+// --- 格式选择 ---
+$('fmtMp4').onclick = function() { preferMp4 = true; $('fmtMp4').className = 'on'; $('fmtWebm').className = ''; };
+$('fmtWebm').onclick = function() { preferMp4 = false; $('fmtWebm').className = 'on'; $('fmtMp4').className = ''; };
+
+// --- 拖拽 & 点击上传 ---
+$('dropzone').addEventListener('click', function() { $('fileIn').click(); });
+$('dropzone').addEventListener('dragover', function(e) { e.preventDefault(); $('dropzone').classList.add('drag'); });
+$('dropzone').addEventListener('dragleave', function() { $('dropzone').classList.remove('drag'); });
+$('dropzone').addEventListener('drop', function(e) { e.preventDefault(); $('dropzone').classList.remove('drag'); addFiles(e.dataTransfer.files); });
+$('fileIn').addEventListener('change', function() { addFiles($('fileIn').files); $('fileIn').value = ''; });
+
+function addFiles(flist) {
+  for (var i = 0; i < flist.length; i++) {
+    var f = flist[i];
+    if (!f.type.startsWith('image/') && !f.type.startsWith('video/')) continue;
+    if (files.some(function(x) { return x.name === f.name && x.size === f.size; })) continue;
+    files.push(f);
+  }
+  renderFiles();
+}
+
+function renderFiles() {
+  if (!files.length) { $('filesCard').style.display = 'none'; $('goBtn').disabled = true; return; }
+  $('filesCard').style.display = 'block'; $('goBtn').disabled = false;
+  $('fCnt').textContent = '已选 ' + files.length + ' 个文件';
+  $('fList').innerHTML = '';
+  files.forEach(function(f, i) {
+    var d = document.createElement('div'); d.className = 'file-item';
+    if (isVideo(f)) {
+      var thumb = document.createElement('div'); thumb.className = 'file-thumb file-thumb-vid';
+      thumb.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+      d.appendChild(thumb);
+    } else {
+      var img = document.createElement('img'); img.className = 'file-thumb';
+      var url = URL.createObjectURL(f); img.src = url; img.onload = function() { URL.revokeObjectURL(url); };
+      d.appendChild(img);
+    }
+    var nm = document.createElement('span'); nm.className = 'file-name'; nm.textContent = f.name; d.appendChild(nm);
+    var tag = document.createElement('span'); tag.className = 'file-tag ' + (isVideo(f) ? 'tag-vid' : 'tag-img');
+    tag.textContent = isVideo(f) ? '视频' : '图片'; d.appendChild(tag);
+    var rm = document.createElement('button'); rm.className = 'file-rm'; rm.textContent = '\u00d7';
+    rm.onclick = (function(idx) { return function(e) { e.stopPropagation(); files.splice(idx, 1); renderFiles(); }; })(i);
+    d.appendChild(rm);
+    $('fList').appendChild(d);
+  });
+}
+
+$('fClr').addEventListener('click', function() { files = []; renderFiles(); });
+
+// --- 设置面板 ---
+$('setTog').addEventListener('click', function() {
+  var show = $('setBd').style.display === 'none';
+  $('setBd').style.display = show ? 'flex' : 'none';
+  $('arrow').classList.toggle('open', show);
+});
+
+// --- 主解密流程 ---
+$('goBtn').addEventListener('click', async function() {
+  if (!files.length) return;
+  var password = $('pw').value, blockSize = parseInt($('bs').value) || 16, fps = parseInt($('fpsIn').value) || 30;
+  $('goBtn').disabled = true; $('goBtn').classList.add('loading');
+  $('prgCard').style.display = 'block'; $('resCard').style.display = 'none';
+  $('prgBar').style.width = '0%'; $('prgLbl').style.color = 'var(--text3)';
+  results = [];
+  resultUrls.forEach(function(u) { URL.revokeObjectURL(u); }); resultUrls = [];
+
+  for (var idx = 0; idx < files.length; idx++) {
+    var f = files[idx];
+    var prefix = '处理 ' + (idx+1) + '/' + files.length + ' — ' + f.name;
+    try {
+      if (isVideo(f)) {
+        var onProg = (function(pre) {
+          return function(phase, cur, total, extra) {
+            $('prgBar').style.width = (cur / total * 100).toFixed(1) + '%';
+            $('prgLbl').textContent = pre + ' · ' + phase + ' ' + cur + '/' + total + (extra || '');
+          };
+        })(prefix);
+
+        var result;
+        if (HAS_WEBCODECS) {
+          try {
+            result = await decryptVideoWebCodecs(f, password, blockSize, preferMp4, onProg);
+          } catch(e) {
+            console.warn('WebCodecs failed, fallback:', e);
+            if (HAS_MEDIARECORDER) {
+              result = await decryptVideoMediaRecorder(f, password, blockSize, fps, onProg);
+            } else {
+              throw e;
+            }
+          }
+        } else {
+          result = await decryptVideoMediaRecorder(f, password, blockSize, fps, onProg);
+        }
+
+        var url = URL.createObjectURL(result.blob);
+        resultUrls.push(url);
+        results.push({type:'video', url:url, blob:result.blob, hasAudio:result.hasAudio, filename:result.filename, engine:result.engine});
+      } else {
+        var img = await loadImage(f);
+        var canvas = await decryptImg(img, password, blockSize, function(p) {
+          $('prgBar').style.width = (p * 100).toFixed(1) + '%';
+          $('prgLbl').textContent = prefix;
+        });
+        results.push({type:'image', canvas:canvas, filename:f.name.replace(/\.[^.]+$/, '') + '_解密_' + blockSize + '.png'});
+      }
+    } catch(err) {
+      results.push({type:'error', filename:f.name, error:err.message});
+    }
+  }
+
+  showResults();
+  $('goBtn').disabled = false; $('goBtn').classList.remove('loading');
+  $('prgCard').style.display = 'none';
+});
+
+// --- 结果展示 ---
+function showResults() {
+  $('resCard').style.display = 'block'; $('resList').innerHTML = '';
+  results.forEach(function(r, i) {
+    var div = document.createElement('div'); div.className = 'res-item';
+    if (r.type === 'error') {
+      div.innerHTML = '<div class="res-err">\u26a0 ' + r.filename + ': ' + r.error + '</div>';
+    } else if (r.type === 'image') {
+      var img = document.createElement('img');
+      var max = 400, ratio = Math.min(max / r.canvas.width, max / r.canvas.height, 1);
+      var tc = document.createElement('canvas'); tc.width = Math.round(r.canvas.width * ratio); tc.height = Math.round(r.canvas.height * ratio);
+      tc.getContext('2d').drawImage(r.canvas, 0, 0, tc.width, tc.height);
+      img.src = tc.toDataURL('image/jpeg', .85);
+      img.onclick = function() { showModal(r.canvas); };
+      div.appendChild(img);
+      var bar = document.createElement('div'); bar.className = 'res-bar';
+      var fn = document.createElement('span'); fn.className = 'res-fn'; fn.textContent = r.filename;
+      var info = document.createElement('div'); info.className = 'res-info';
+      var tg = document.createElement('span'); tg.className = 'file-tag tag-img'; tg.textContent = '图片';
+      var dl = document.createElement('button'); dl.className = 'res-dl'; dl.textContent = '下载';
+      dl.onclick = function() { dlCanvas(r.canvas, r.filename); };
+      info.append(tg, dl); bar.append(fn, info); div.appendChild(bar);
+    } else {
+      var vid = document.createElement('video'); vid.src = r.url; vid.controls = true; vid.playsInline = true; vid.preload = 'metadata';
+      div.appendChild(vid);
+      var bar = document.createElement('div'); bar.className = 'res-bar';
+      var fn = document.createElement('span'); fn.className = 'res-fn'; fn.textContent = r.filename;
+      var info = document.createElement('div'); info.className = 'res-info';
+      var tg = document.createElement('span'); tg.className = 'file-tag tag-vid'; tg.textContent = r.engine + (r.hasAudio ? ' · 含音频' : ' · 无音频');
+      var dl = document.createElement('button'); dl.className = 'res-dl'; dl.textContent = '下载';
+      dl.onclick = function() { dlBlob(r.blob, r.filename); };
+      info.append(tg, dl); bar.append(fn, info); div.appendChild(bar);
+    }
+    $('resList').appendChild(div);
+  });
+  $('resCard').scrollIntoView({behavior:'smooth'});
+}
+
+function showModal(canvas) {
+  var m = document.createElement('div'); m.className = 'modal';
+  var img = document.createElement('img'); img.src = canvas.toDataURL('image/png');
+  m.appendChild(img); m.onclick = function() { m.remove(); };
+  document.body.appendChild(m);
+}
+
+// --- 下载 ---
+function dlCanvas(canvas, name) {
+  if (typeof Android !== 'undefined') { var d = canvas.toDataURL('image/png'); Android.saveImage(d.split(',')[1], name); return; }
+  var a = document.createElement('a'); a.download = name;
+  try { a.href = canvas.toDataURL('image/png'); } catch(e) { canvas.toBlob(function(b) { a.href = URL.createObjectURL(b); a.click(); }, 'image/png'); return; }
+  a.click();
+}
+
+function dlBlob(blob, name) {
+  var a = document.createElement('a'); a.download = name; a.href = URL.createObjectURL(blob);
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+}
+
+$('dlAll').addEventListener('click', async function() {
+  for (var i = 0; i < results.length; i++) {
+    var r = results[i]; if (r.type === 'error') continue;
+    if (r.type === 'image') dlCanvas(r.canvas, r.filename); else dlBlob(r.blob, r.filename);
+    await new Promise(function(r) { setTimeout(r, 400); });
+  }
+});
+
+// --- 重置 ---
+$('rstBtn').addEventListener('click', function() {
+  resultUrls.forEach(function(u) { URL.revokeObjectURL(u); }); resultUrls = [];
+  files = []; results = [];
+  renderFiles(); $('resCard').style.display = 'none'; $('prgCard').style.display = 'none';
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+</script>
+</body>
 </html>
