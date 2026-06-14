@@ -2,6 +2,7 @@ import { Muxer as Mp4Muxer, ArrayBufferTarget as Mp4Target } from 'mp4-muxer';
 import { Muxer as WebmMuxer, ArrayBufferTarget as WebmTarget } from 'webm-muxer';
 import { computeInverseMap } from './pyrandom';
 import { permuteBlocks } from './imageDecrypt';
+import { probeAndDecodeAudio, encodeAudioToMuxer, type DecodedAudio } from './audioMux';
 
 export interface ProgressInfo {
   phase: string;
@@ -153,6 +154,27 @@ export async function decryptVideoWebCodecs(
     if (!codec) throw new Error('浏览器不支持 H.264 / VP9 编码');
   }
 
+  // ---- 先解码音频（必须在创建 muxer 之前，因为 muxer 需要在初始化时声明音频轨道）----
+  let decodedAudio: DecodedAudio | null = null;
+  try {
+    decodedAudio = await probeAndDecodeAudio(file, useMp4);
+  } catch {
+    decodedAudio = null;
+  }
+
+  // 若音频只能用 Opus（AAC 不可用），为避免丢失声音，强制改用 WebM 容器
+  if (decodedAudio && decodedAudio.forceWebm && useMp4) {
+    useMp4 = false;
+    const vp9 = await pickVp9Config(nw, nh, bitrate);
+    if (vp9) {
+      codec = vp9;
+    } else {
+      // VP9 不可用则放弃强制切换，宁可没声音也保留 MP4 视频
+      useMp4 = true;
+      decodedAudio = null;
+    }
+  }
+
   const ext = useMp4 ? 'mp4' : 'webm';
 
   let muxer: any;
@@ -160,6 +182,15 @@ export async function decryptVideoWebCodecs(
     muxer = new Mp4Muxer({
       target: new Mp4Target(),
       video: { codec: 'avc', width: nw, height: nh },
+      ...(decodedAudio
+        ? {
+            audio: {
+              codec: 'aac',
+              numberOfChannels: decodedAudio.numCh,
+              sampleRate: decodedAudio.sampleRate,
+            },
+          }
+        : {}),
       fastStart: 'in-memory',
       firstTimestampBehavior: 'offset',
     });
@@ -167,6 +198,15 @@ export async function decryptVideoWebCodecs(
     muxer = new WebmMuxer({
       target: new WebmTarget(),
       video: { codec: 'V_VP9', width: nw, height: nh },
+      ...(decodedAudio
+        ? {
+            audio: {
+              codec: 'A_OPUS',
+              numberOfChannels: decodedAudio.numCh,
+              sampleRate: decodedAudio.sampleRate,
+            },
+          }
+        : {}),
       firstTimestampBehavior: 'offset',
     });
   }
@@ -306,12 +346,15 @@ export async function decryptVideoWebCodecs(
   await encoder.flush();
   if (encError) throw encError;
 
-  // ---- 音频：尝试从原文件提取并混流 ----
+  // ---- 音频：把已解码音频重编码并混入（muxer 已声明音频轨道）----
   let hasAudio = false;
-  try {
-    hasAudio = await tryMuxAudio(file, muxer, useMp4);
-  } catch {
-    hasAudio = false;
+  if (decodedAudio) {
+    try {
+      onProgress({ phase: '混流音频', cur: 1, total: 1 });
+      hasAudio = await encodeAudioToMuxer(decodedAudio, muxer);
+    } catch {
+      hasAudio = false;
+    }
   }
 
   muxer.finalize();
@@ -326,112 +369,4 @@ export async function decryptVideoWebCodecs(
     engine: 'WebCodecs',
     ext,
   };
-}
-
-/**
- * 尝试用 WebCodecs AudioEncoder 重新编码音频并混入 muxer。
- * 由于浏览器无内置 demuxer，这里用 AudioContext 解码原始 PCM 后重编码。
- */
-async function tryMuxAudio(file: File, muxer: any, useMp4: boolean): Promise<boolean> {
-  if (!('AudioEncoder' in window) || !('AudioData' in window)) return false;
-  const arrayBuf = await file.arrayBuffer();
-  const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
-  if (!AC) return false;
-  const ac = new AC();
-  let audioBuffer: AudioBuffer;
-  try {
-    audioBuffer = await ac.decodeAudioData(arrayBuf.slice(0));
-  } catch {
-    await ac.close();
-    return false;
-  }
-  const numCh = audioBuffer.numberOfChannels;
-  const sampleRate = audioBuffer.sampleRate;
-  const length = audioBuffer.length;
-  if (!numCh || !length) {
-    await ac.close();
-    return false;
-  }
-
-  const codecStr = useMp4 ? 'mp4a.40.2' : 'opus';
-
-  // 校验支持
-  try {
-    const sup = await (window as any).AudioEncoder.isConfigSupported({
-      codec: codecStr,
-      sampleRate,
-      numberOfChannels: numCh,
-      bitrate: 192_000,
-    });
-    if (!sup || !sup.supported) {
-      await ac.close();
-      return false;
-    }
-  } catch {
-    await ac.close();
-    return false;
-  }
-
-  return await new Promise<boolean>((resolve) => {
-    let ok = false;
-    const AE = (window as any).AudioEncoder;
-    const enc = new AE({
-      output: (chunk: any, meta: any) => {
-        muxer.addAudioChunk(chunk, meta);
-        ok = true;
-      },
-      error: () => resolve(false),
-    });
-    try {
-      enc.configure({
-        codec: codecStr,
-        sampleRate,
-        numberOfChannels: numCh,
-        bitrate: 192_000,
-      });
-    } catch {
-      resolve(false);
-      return;
-    }
-
-    // 交错成 f32-planar AudioData，按块送入
-    const chunkFrames = 4096;
-    const AD = (window as any).AudioData;
-    const channelData: Float32Array[] = [];
-    for (let c = 0; c < numCh; c++) channelData.push(audioBuffer.getChannelData(c));
-
-    (async () => {
-      try {
-        for (let pos = 0; pos < length; pos += chunkFrames) {
-          const frames = Math.min(chunkFrames, length - pos);
-          // planar 布局：[ch0 全部, ch1 全部, ...]
-          const planar = new Float32Array(frames * numCh);
-          for (let c = 0; c < numCh; c++) {
-            planar.set(channelData[c].subarray(pos, pos + frames), c * frames);
-          }
-          const ts = Math.round((pos / sampleRate) * 1_000_000);
-          const ad = new AD({
-            format: 'f32-planar',
-            sampleRate,
-            numberOfFrames: frames,
-            numberOfChannels: numCh,
-            timestamp: ts,
-            data: planar,
-          });
-          enc.encode(ad);
-          ad.close();
-        }
-        await enc.flush();
-        await ac.close();
-        resolve(ok);
-      } catch {
-        try {
-          await ac.close();
-        } catch {
-          /* ignore */
-        }
-        resolve(false);
-      }
-    })();
-  });
 }
