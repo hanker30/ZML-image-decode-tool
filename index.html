@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="theme-color" content="#0a0a14">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>图像解密工具</title>
+<title>解密工具</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -30,11 +30,17 @@ body::before{content:'';position:fixed;inset:0;opacity:.02;pointer-events:none;z
 .files-count{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--accent)}
 .files-clear{background:none;border:none;color:var(--text3);font-size:.8rem;cursor:pointer;padding:4px 8px;border-radius:4px}
 .files-clear:hover{color:var(--err);background:rgba(255,107,107,.1)}
-.files-list{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto}
+.files-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
 .file-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border-radius:var(--rs);font-size:.85rem}
-.file-item img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0}
+.file-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0}
+.file-thumb-vid{width:36px;height:36px;border-radius:6px;background:rgba(61,220,132,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.file-thumb-vid svg{width:16px;height:16px;color:var(--ok);opacity:.7}
 .file-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.file-tag{font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:2px 7px;border-radius:3px;flex-shrink:0;letter-spacing:.04em}
+.tag-img{color:var(--accent);background:rgba(232,168,56,.1)}
+.tag-vid{color:var(--ok);background:rgba(61,220,132,.1)}
 .file-rm{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:1.1rem;line-height:1}
+.file-rm:hover{color:var(--err)}
 .settings-hd{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;color:var(--text2);font-size:.9rem;cursor:pointer;padding:0}
 .arrow{transition:transform .3s}
 .arrow.open{transform:rotate(180deg)}
@@ -43,6 +49,7 @@ body::before{content:'';position:fixed;inset:0;opacity:.02;pointer-events:none;z
 .srow label{font-size:.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:'JetBrains Mono',monospace}
 .srow input{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:.95rem;padding:10px 14px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .2s}
 .srow input:focus{border-color:var(--accent)}
+.srow .hint{font-size:.7rem;color:var(--text3);margin-top:2px}
 .act-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:var(--accent);color:#0a0a14;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:16px;animation:fadeUp .5s ease .15s both}
 .act-btn:hover:not(:disabled){background:var(--accent-hover);transform:translateY(-1px)}
 .act-btn:disabled{opacity:.3;cursor:not-allowed}
@@ -57,19 +64,25 @@ body::before{content:'';position:fixed;inset:0;opacity:.02;pointer-events:none;z
 .res-hd h2{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:600;color:var(--ok)}
 .res-list{display:flex;flex-direction:column;gap:14px;margin-bottom:20px}
 .res-item{border-radius:var(--rs);overflow:hidden;background:var(--surface);animation:fadeUp .4s ease both}
-.res-item:nth-child(2){animation-delay:.1s}
-.res-item:nth-child(3){animation-delay:.2s}
+.res-item:nth-child(2){animation-delay:.08s}
+.res-item:nth-child(3){animation-delay:.16s}
+.res-item:nth-child(4){animation-delay:.24s}
 .res-item img{width:100%;display:block;cursor:zoom-in}
+.res-item video{width:100%;display:block;background:#000;max-height:260px}
 .res-bar{padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
-.res-fn{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%}
+.res-fn{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:48%}
+.res-info{display:flex;align-items:center;gap:6px}
 .res-dl{background:none;border:1px solid var(--accent);color:var(--accent);padding:5px 14px;border-radius:var(--rs);font-size:.78rem;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
 .res-dl:hover{background:var(--accent);color:#0a0a14}
+.res-err{padding:20px;color:var(--err);font-size:.9rem}
 .res-acts{display:flex;gap:12px}
 .dl-all,.reset-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:var(--rs);font-size:.9rem;cursor:pointer;transition:all .2s;border:none;font-weight:500}
 .dl-all{background:var(--accent);color:#0a0a14;font-family:'Syne',sans-serif;font-weight:600}
 .reset-btn{background:var(--surface);color:var(--text2);border:1px solid var(--border)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:99999;cursor:zoom-out;animation:fadeIn .2s}
 .modal img{max-width:95%;max-height:95%;object-fit:contain}
+.warn-card{border-color:rgba(255,107,107,.4)!important}
+.warn-card p{color:var(--err);font-size:.85rem;text-align:center}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
@@ -81,35 +94,57 @@ body::before{content:'';position:fixed;inset:0;opacity:.02;pointer-events:none;z
 <body>
 <div id="app">
   <header class="header">
-    <h1 class="app-title">图像解密</h1>
-    <p class="app-desc">基于块置换算法 · 兼容 Python 端加密</p>
+    <h1 class="app-title">解密工具</h1>
+    <p class="app-desc">基于块置换算法 · 图片 & 视频 · 兼容 Python 端加密</p>
   </header>
 
+  <div id="warnBox"></div>
+
   <div class="card upload-card" id="dropzone">
-    <input type="file" id="fileIn" accept="image/*" multiple hidden>
+    <input type="file" id="fileIn" accept="image/*,video/*" multiple hidden>
     <div class="upload-icon">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
       </svg>
     </div>
-    <p class="upload-title">选择加密图像</p>
-    <p class="upload-hint">点击选择 · 支持批量处理</p>
+    <p class="upload-title">选择加密文件</p>
+    <p class="upload-hint">支持图片和视频 · 点击或拖拽 · 可批量处理</p>
   </div>
 
   <div class="card" id="filesCard" style="display:none">
-    <div class="files-hd"><span class="files-count" id="fCnt"></span><button class="files-clear" id="fClr">清除全部</button></div>
+    <div class="files-hd">
+      <span class="files-count" id="fCnt"></span>
+      <button class="files-clear" id="fClr">清除全部</button>
+    </div>
     <div class="files-list" id="fList"></div>
   </div>
 
   <div class="card">
-    <button class="settings-hd" id="setTog"><span>高级设置</span><svg class="arrow" id="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+    <button class="settings-hd" id="setTog">
+      <span>高级设置</span>
+      <svg class="arrow" id="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
     <div class="settings-bd" id="setBd" style="display:none">
-      <div class="srow"><label>解密密码</label><input type="text" id="pw" value="在梦里w" spellcheck="false"></div>
-      <div class="srow"><label>块大小 (px)</label><input type="number" id="bs" value="16" min="2" max="256"></div>
+      <div class="srow">
+        <label>解密密码</label>
+        <input type="text" id="pw" value="在梦里w" spellcheck="false">
+      </div>
+      <div class="srow">
+        <label>块大小 (px)</label>
+        <input type="number" id="bs" value="16" min="2" max="256">
+      </div>
+      <div class="srow">
+        <label>视频帧率 (fps)</label>
+        <input type="number" id="fpsIn" value="30" min="1" max="120">
+        <span class="hint">仅视频文件需要，应与加密时一致，默认 30</span>
+      </div>
     </div>
   </div>
 
-  <button class="act-btn" id="goBtn" disabled><span class="spinner"></span><span class="bt">开始解密</span></button>
+  <button class="act-btn" id="goBtn" disabled>
+    <span class="spinner"></span>
+    <span class="bt">开始解密</span>
+  </button>
 
   <div class="card prg-card" id="prgCard" style="display:none">
     <div class="prg-track"><div class="prg-bar" id="prgBar"></div></div>
@@ -128,276 +163,382 @@ body::before{content:'';position:fixed;inset:0;opacity:.02;pointer-events:none;z
 
 <script>
 // ======================================================
-// Python 兼容 Mersenne Twister (MT19937) 伪随机数生成器
-// 完全复现 Python random.seed / random.shuffle 行为
+// Python 兼容 Mersenne Twister (MT19937)
 // ======================================================
 
 class MT19937 {
-  constructor(){
-    this.N=624;this.M=397;
-    this.mt=new Uint32Array(this.N);
-    this.mti=this.N+1;
-  }
+  constructor(){this.N=624;this.M=397;this.mt=new Uint32Array(this.N);this.mti=this.N+1;}
   init_genrand(s){
     this.mt[0]=s>>>0;
-    for(let i=1;i<this.N;i++){
-      this.mt[i]=(Math.imul(this.mt[i-1]^this.mt[i-1]>>>30,1812433253)+i)>>>0;
-    }
+    for(let i=1;i<this.N;i++)this.mt[i]=(Math.imul(this.mt[i-1]^this.mt[i-1]>>>30,1812433253)+i)>>>0;
     this.mti=this.N;
   }
   init_by_array(key){
-    this.init_genrand(19650218);
-    let i=1,j=0,k=Math.max(this.N,key.length);
-    for(;k>0;k--){
-      let s=this.mt[i-1]^this.mt[i-1]>>>30;
-      this.mt[i]=((this.mt[i]^Math.imul(s,1664525))+key[j]+j)>>>0;
-      i++;j++;
-      if(i>=this.N){this.mt[0]=this.mt[this.N-1];i=1;}
-      if(j>=key.length)j=0;
-    }
-    for(k=this.N-1;k>0;k--){
-      let s=this.mt[i-1]^this.mt[i-1]>>>30;
-      this.mt[i]=((this.mt[i]^Math.imul(s,1566083941))-i)>>>0;
-      i++;
-      if(i>=this.N){this.mt[0]=this.mt[this.N-1];i=1;}
-    }
+    this.init_genrand(19650218);let i=1,j=0,k=Math.max(this.N,key.length);
+    for(;k>0;k--){let s=this.mt[i-1]^this.mt[i-1]>>>30;this.mt[i]=((this.mt[i]^Math.imul(s,1664525))+key[j]+j)>>>0;i++;j++;if(i>=this.N){this.mt[0]=this.mt[this.N-1];i=1;}if(j>=key.length)j=0;}
+    for(k=this.N-1;k>0;k--){let s=this.mt[i-1]^this.mt[i-1]>>>30;this.mt[i]=((this.mt[i]^Math.imul(s,1566083941))-i)>>>0;i++;if(i>=this.N){this.mt[0]=this.mt[this.N-1];i=1;}}
     this.mt[0]=0x80000000;
   }
   genrand_int32(){
     let y;const m=[0,0x9908b0df];
-    if(this.mti>=this.N){
-      let kk;
-      for(kk=0;kk<this.N-this.M;kk++){
-        y=(this.mt[kk]&0x80000000)|(this.mt[kk+1]&0x7fffffff);
-        this.mt[kk]=(this.mt[kk+this.M]^(y>>>1)^m[y&1])>>>0;
-      }
-      for(;kk<this.N-1;kk++){
-        y=(this.mt[kk]&0x80000000)|(this.mt[kk+1]&0x7fffffff);
-        this.mt[kk]=(this.mt[kk+(this.M-this.N)]^(y>>>1)^m[y&1])>>>0;
-      }
-      y=(this.mt[this.N-1]&0x80000000)|(this.mt[0]&0x7fffffff);
-      this.mt[this.N-1]=(this.mt[this.M-1]^(y>>>1)^m[y&1])>>>0;
-      this.mti=0;
-    }
-    y=this.mt[this.mti++];
-    y^=y>>>11;y^=y<<7&0x9d2c5680;y^=y<<15&0xefc60000;y^=y>>>18;
-    return y>>>0;
+    if(this.mti>=this.N){let kk;for(kk=0;kk<this.N-this.M;kk++){y=(this.mt[kk]&0x80000000)|(this.mt[kk+1]&0x7fffffff);this.mt[kk]=(this.mt[kk+this.M]^(y>>>1)^m[y&1])>>>0;}for(;kk<this.N-1;kk++){y=(this.mt[kk]&0x80000000)|(this.mt[kk+1]&0x7fffffff);this.mt[kk]=(this.mt[kk+(this.M-this.N)]^(y>>>1)^m[y&1])>>>0;}y=(this.mt[this.N-1]&0x80000000)|(this.mt[0]&0x7fffffff);this.mt[this.N-1]=(this.mt[this.M-1]^(y>>>1)^m[y&1])>>>0;this.mti=0;}
+    y=this.mt[this.mti++];y^=y>>>11;y^=y<<7&0x9d2c5680;y^=y<<15&0xefc60000;y^=y>>>18;return y>>>0;
   }
 }
 
 class PyRandom {
   constructor(){this.mt=new MT19937();}
   async seed(pw){
-    const enc=new TextEncoder();
-    const pb=enc.encode(pw);
-    const hb=new Uint8Array(await crypto.subtle.digest('SHA-512',pb));
-    const cb=new Uint8Array(pb.length+hb.length);
-    cb.set(pb);cb.set(hb,pb.length);
-    let bi=0n;for(const b of cb)bi=(bi<<8n)|BigInt(b);
-    const w=[];let t=bi;
-    while(t>0n){w.push(Number(t&0xFFFFFFFFn));t>>=32n;}
-    if(!w.length)w.push(0);
+    const enc=new TextEncoder(),pb=enc.encode(pw),hb=new Uint8Array(await crypto.subtle.digest('SHA-512',pb)),cb=new Uint8Array(pb.length+hb.length);
+    cb.set(pb);cb.set(hb,pb.length);let bi=0n;for(const b of cb)bi=(bi<<8n)|BigInt(b);
+    const w=[];let t=bi;while(t>0n){w.push(Number(t&0xFFFFFFFFn));t>>=32n;}if(!w.length)w.push(0);
     this.mt.init_by_array(w);
   }
   getrandbits(k){return k<=0?0:this.mt.genrand_int32()>>>(32-k);}
-  _randbelow(n){
-    if(n<=1)return 0;
-    const k=32-Math.clz32(n);
-    while(true){const r=this.getrandbits(k);if(r<n)return r;}
-  }
+  _randbelow(n){if(n<=1)return 0;const k=32-Math.clz32(n);while(true){const r=this.getrandbits(k);if(r<n)return r;}}
   shuffle(a){for(let i=a.length-1;i>0;i--){const j=this._randbelow(i+1);const t=a[i];a[i]=a[j];a[j]=t;}}
 }
 
 // ======================================================
-// 图像解密核心
+// 浏览器兼容性检查
 // ======================================================
 
-async function decrypt(img,pw,bs,onPrg){
-  const ow=img.naturalWidth||img.width, oh=img.naturalHeight||img.height;
-  const nw=Math.floor(ow/bs)*bs, nh=Math.floor(oh/bs)*bs;
-  if(!nw||!nh)throw new Error('图像尺寸小于块大小');
-  const ox=Math.floor((ow-nw)/2), oy=Math.floor((oh-nh)/2);
-  const nc=nw/bs, nr=nh/bs, nb=nr*nc;
+(function(){
+  var w=document.getElementById('warnBox'),iss=[];
+  if(!window.MediaRecorder)iss.push('MediaRecorder');
+  if(!HTMLCanvasElement.prototype.captureStream)iss.push('captureStream');
+  if(!window.crypto||!window.crypto.subtle)iss.push('Web Crypto');
+  if(iss.length)w.innerHTML='<div class="card warn-card"><p>您的浏览器缺少以下功能：'+iss.join('、')+'。<br>请使用最新版 <b>Chrome</b> 或 <b>Firefox</b>。</p></div>';
+})();
 
-  // 源画布（裁剪 + 白底 = 等效 Python convert("RGB")）
-  const sc=document.createElement('canvas');sc.width=nw;sc.height=nh;
-  const sx=sc.getContext('2d');sx.fillStyle='#fff';sx.fillRect(0,0,nw,nh);
+// ======================================================
+// 工具函数
+// ======================================================
+
+function getSupportedMime(){
+  var t=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  for(var i=0;i<t.length;i++)if(MediaRecorder.isTypeSupported(t[i]))return t[i];
+  return '';
+}
+
+function drawBlobToCanvas(blob,ctx,w,h){
+  if(window.createImageBitmap){
+    return createImageBitmap(blob).then(function(bmp){ctx.clearRect(0,0,w,h);ctx.drawImage(bmp,0,0);bmp.close();});
+  }
+  return new Promise(function(res,rej){
+    var im=new Image();
+    im.onload=function(){ctx.clearRect(0,0,w,h);ctx.drawImage(im,0,0);URL.revokeObjectURL(im.src);res();};
+    im.onerror=function(){URL.revokeObjectURL(im.src);rej(new Error('帧解码失败'));};
+    im.src=URL.createObjectURL(blob);
+  });
+}
+
+function loadImage(file){
+  return new Promise(function(res,rej){
+    var r=new FileReader();
+    r.onload=function(e){var im=new Image();im.onload=function(){res(im);};im.onerror=function(){rej(new Error('图片解码失败'));};im.src=e.target.result;};
+    r.onerror=function(){rej(new Error('文件读取失败'));};
+    r.readAsDataURL(file);
+  });
+}
+
+function loadVideo(file){
+  return new Promise(function(res,rej){
+    var v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';
+    v.src=URL.createObjectURL(file);var done=false;
+    v.onloadedmetadata=function(){if(!done){done=true;res(v);}};
+    v.onerror=function(){if(!done){done=true;rej(new Error('视频加载失败'));}};
+    setTimeout(function(){if(!done){done=true;rej(new Error('视频加载超时'));}},15000);
+  });
+}
+
+function isVideo(f){return f.type.startsWith('video/');}
+
+// ======================================================
+// 核心：图片解密
+// ======================================================
+
+async function decryptImg(img,pw,bs,onPrg){
+  var ow=img.naturalWidth||img.width,oh=img.naturalHeight||img.height;
+  var nw=Math.floor(ow/bs)*bs,nh=Math.floor(oh/bs)*bs;
+  if(!nw||!nh)throw new Error('图像尺寸小于块大小');
+  var ox=Math.floor((ow-nw)/2),oy=Math.floor((oh-nh)/2);
+  var nc=nw/bs,nr=nh/bs,nb=nr*nc;
+
+  var sc=document.createElement('canvas');sc.width=nw;sc.height=nh;
+  var sx=sc.getContext('2d');sx.fillStyle='#fff';sx.fillRect(0,0,nw,nh);
   sx.drawImage(img,ox,oy,nw,nh,0,0,nw,nh);
 
-  // 生成与 Python 完全一致的随机置换
-  const rng=new PyRandom();
-  await rng.seed(pw);
-  const si=Array.from({length:nb},(_,i)=>i);
+  var rng=new PyRandom();await rng.seed(pw);
+  var si=Array.from({length:nb},function(_,i){return i;});
   rng.shuffle(si);
-  const inv=new Array(nb);
-  for(let o=0;o<nb;o++)inv[si[o]]=o;
+  var inv=new Array(nb);for(var o=0;o<nb;o++)inv[si[o]]=o;
 
-  // 目标画布
-  const dc=document.createElement('canvas');dc.width=nw;dc.height=nh;
-  const dx=dc.getContext('2d');dx.fillStyle='#fff';dx.fillRect(0,0,nw,nh);
+  var dc=document.createElement('canvas');dc.width=nw;dc.height=nh;
+  var dx=dc.getContext('2d');dx.fillStyle='#fff';dx.fillRect(0,0,nw,nh);
 
-  // 逐块搬移
-  const B=500;
-  for(let p=0;p<nb;p++){
-    const op=inv[p];
-    dx.drawImage(sc,
-      (p%nc)*bs,Math.floor(p/nc)*bs,bs,bs,
-      (op%nc)*bs,Math.floor(op/nc)*bs,bs,bs);
-    if(p%B===0&&p>0){onPrg&&onPrg(p/nb);await new Promise(r=>setTimeout(r,0));}
+  for(var p=0;p<nb;p++){
+    var op=inv[p];
+    dx.drawImage(sc,(p%nc)*bs,Math.floor(p/nc)*bs,bs,bs,(op%nc)*bs,Math.floor(op/nc)*bs,bs,bs);
+    if(p%500===0&&p>0){onPrg&&onPrg(p/nb);await new Promise(function(r){setTimeout(r,0);});}
   }
   onPrg&&onPrg(1);
   return dc;
 }
 
 // ======================================================
+// 核心：视频解密（两阶段 + 音频）
+// ======================================================
+
+async function decryptVideo(videoFile,videoEl,password,blockSize,fps,onProgress){
+  var vw=videoEl.videoWidth,vh=videoEl.videoHeight;
+  var nw=Math.floor(vw/blockSize)*blockSize,nh=Math.floor(vh/blockSize)*blockSize;
+  if(!nw||!nh)throw new Error('视频尺寸小于块大小');
+  var cropX=Math.floor((vw-nw)/2),cropY=Math.floor((vh-nh)/2);
+  var nc=nw/blockSize,nr=nh/blockSize,nb=nr*nc;
+  var duration=videoEl.duration,totalFrames=Math.ceil(duration*fps);
+  if(totalFrames<=0)throw new Error('无法读取视频时长');
+
+  var rng=new PyRandom();await rng.seed(password);
+  var si=Array.from({length:nb},function(_,i){return i;});rng.shuffle(si);
+  var inv=new Array(nb);for(var o=0;o<nb;o++)inv[si[o]]=o;
+
+  var sc=document.createElement('canvas');sc.width=nw;sc.height=nh;var sx=sc.getContext('2d');
+  var dc=document.createElement('canvas');dc.width=nw;dc.height=nh;var dx=dc.getContext('2d');
+
+  function seekTo(vid,t){return new Promise(function(resolve){var done=false;function fin(){if(!done){done=true;resolve();}}vid.onseeked=fin;vid.currentTime=t;setTimeout(fin,4000);});}
+
+  // ---- 阶段一：解密所有帧 ----
+  onProgress('解密帧',0,totalFrames,'');
+  var frameBlobs=[],t0=performance.now();
+
+  for(var fi=0;fi<totalFrames;fi++){
+    await seekTo(videoEl,fi/fps);
+    sx.fillStyle='#fff';sx.fillRect(0,0,nw,nh);sx.drawImage(videoEl,cropX,cropY,nw,nh,0,0,nw,nh);
+    dx.fillStyle='#fff';dx.fillRect(0,0,nw,nh);
+    for(var p=0;p<nb;p++){var op=inv[p];dx.drawImage(sc,(p%nc)*blockSize,(p/nc|0)*blockSize,blockSize,blockSize,(op%nc)*blockSize,(op/nc|0)*blockSize,blockSize,blockSize);}
+    var blob=await new Promise(function(r){dc.toBlob(r,'image/jpeg',0.92);});
+    frameBlobs.push(blob);
+    var elapsed=(performance.now()-t0)/1000,eta=fi>0?Math.ceil(elapsed/fi*(totalFrames-fi-1)):'…';
+    onProgress('解密帧',fi+1,totalFrames,' · 剩余约 '+eta+'s');
+    if(fi%2===0)await new Promise(function(r){setTimeout(r,0);});
+  }
+
+  // ---- 阶段二：音频 ----
+  var hasAudio=false,audioEl=null,audioCtx=null;
+  var canvasStream=dc.captureStream(fps),combinedStream=canvasStream;
+  try{
+    audioEl=document.createElement('video');audioEl.src=URL.createObjectURL(videoFile);audioEl.preload='auto';audioEl.muted=false;
+    await Promise.race([new Promise(function(res,rej){audioEl.onloadeddata=res;audioEl.onerror=function(){rej();};}),new Promise(function(res){setTimeout(res,5000);})]);
+    if(audioEl.readyState>=2&&audioEl.duration>0){
+      audioCtx=new(window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();
+      var src=audioCtx.createMediaElementSource(audioEl),dst=audioCtx.createMediaStreamDestination();src.connect(dst);
+      var at=dst.stream.getAudioTracks(),vt=canvasStream.getVideoTracks();
+      if(at.length>0&&vt.length>0){combinedStream=new MediaStream([vt[0],at[0]]);hasAudio=true;}
+    }
+  }catch(e){}
+
+  // ---- 阶段三：按正确帧率录制 ----
+  var mime=getSupportedMime();if(!mime)throw new Error('浏览器不支持 WebM 录制，请使用 Chrome');
+  var recorder=new MediaRecorder(combinedStream,{mimeType:mime,videoBitsPerSecond:5000000});
+  var chunks=[];recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+
+  return new Promise(function(resolve,reject){
+    var settled=false;
+    function settle(fn,arg){if(!settled){settled=true;fn(arg);}}
+    recorder.onstop=function(){
+      if(audioEl){audioEl.pause();try{URL.revokeObjectURL(audioEl.src);}catch(e){}audioEl.src='';}
+      if(audioCtx)try{audioCtx.close();}catch(e){}
+      resolve({blob:new Blob(chunks,{type:mime}),hasAudio:hasAudio});
+    };
+    recorder.onerror=function(){settle(reject,new Error('视频录制出错'));};
+    var safetyTimer=setTimeout(function(){if(!settled){try{recorder.stop();}catch(e){settle(reject,new Error('编码超时'));}}},Math.ceil(totalFrames/fps)*3*1000+15000);
+    try{recorder.start(200);}catch(e){clearTimeout(safetyTimer);settle(reject,new Error('录制启动失败: '+e.message));return;}
+    if(hasAudio){audioEl.currentTime=0;audioEl.play().catch(function(){});}
+    onProgress('编码视频',0,frameBlobs.length,'');
+    var playFi=0,startTime=performance.now(),frameInterval=1000/fps;
+    function playNext(){
+      if(settled)return;
+      if(playFi>=frameBlobs.length){setTimeout(function(){if(!settled)recorder.stop();},500);return;}
+      drawBlobToCanvas(frameBlobs[playFi],dx,nw,nh).then(function(){
+        playFi++;onProgress('编码视频',playFi,frameBlobs.length,'');
+        var target=playFi*frameInterval,el=performance.now()-startTime;
+        setTimeout(playNext,Math.max(0,target-el));
+      }).catch(function(){playFi++;setTimeout(playNext,0);});
+    }
+    playNext();
+  });
+}
+
+// ======================================================
 // UI 逻辑
 // ======================================================
 
-const $=id=>document.getElementById(id);
-let files=[], results=[];
+var $=function(id){return document.getElementById(id);};
+var files=[],results=[],resultUrls=[];
 
-const dz=$('dropzone'),fi=$('fileIn'),fc=$('filesCard'),fl=$('fList'),fct=$('fCnt'),
-      fcl=$('fClr'),st=$('setTog'),sb=$('setBd'),ar=$('arrow'),
-      pw=$('pw'),bs=$('bs'),gb=$('goBtn'),pc=$('prgCard'),
-      pb=$('prgBar'),pl=$('prgLbl'),rc=$('resCard'),rl=$('resList');
-
-// --- 拖拽 & 点击 ---
-dz.addEventListener('click',()=>fi.click());
-dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
-dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');addFiles(e.dataTransfer.files);});
-fi.addEventListener('change',()=>{addFiles(fi.files);fi.value='';});
+// --- 拖拽 & 点击上传 ---
+$('dropzone').addEventListener('click',function(){$('fileIn').click();});
+$('dropzone').addEventListener('dragover',function(e){e.preventDefault();$('dropzone').classList.add('drag');});
+$('dropzone').addEventListener('dragleave',function(){$('dropzone').classList.remove('drag');});
+$('dropzone').addEventListener('drop',function(e){e.preventDefault();$('dropzone').classList.remove('drag');addFiles(e.dataTransfer.files);});
+$('fileIn').addEventListener('change',function(){addFiles($('fileIn').files);$('fileIn').value='';});
 
 function addFiles(flist){
-  for(const f of flist){
-    if(!f.type.startsWith('image/'))continue;
-    if(files.some(x=>x.name===f.name&&x.size===f.size))continue;
+  for(var i=0;i<flist.length;i++){
+    var f=flist[i];
+    if(!f.type.startsWith('image/')&&!f.type.startsWith('video/'))continue;
+    if(files.some(function(x){return x.name===f.name&&x.size===f.size;}))continue;
     files.push(f);
   }
   renderFiles();
 }
 
 function renderFiles(){
-  if(!files.length){fc.style.display='none';gb.disabled=true;return;}
-  fc.style.display='block';gb.disabled=false;
-  fct.textContent=`已选 ${files.length} 个文件`;
-  fl.innerHTML='';
-  files.forEach((f,i)=>{
-    const d=document.createElement('div');d.className='file-item';
-    const img=document.createElement('img');
-    const url=URL.createObjectURL(f);img.src=url;
-    img.onload=()=>URL.revokeObjectURL(url);
-    const nm=document.createElement('span');nm.className='file-name';nm.textContent=f.name;
-    const rm=document.createElement('button');rm.className='file-rm';rm.textContent='×';
-    rm.onclick=(e)=>{e.stopPropagation();files.splice(i,1);renderFiles();};
-    d.append(img,nm,rm);fl.appendChild(d);
+  if(!files.length){$('filesCard').style.display='none';$('goBtn').disabled=true;return;}
+  $('filesCard').style.display='block';$('goBtn').disabled=false;
+  $('fCnt').textContent='已选 '+files.length+' 个文件';
+  $('fList').innerHTML='';
+  files.forEach(function(f,i){
+    var d=document.createElement('div');d.className='file-item';
+    if(isVideo(f)){
+      var thumb=document.createElement('div');thumb.className='file-thumb file-thumb-vid';
+      thumb.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+      d.appendChild(thumb);
+    }else{
+      var img=document.createElement('img');img.className='file-thumb';
+      var url=URL.createObjectURL(f);img.src=url;img.onload=function(){URL.revokeObjectURL(url);};
+      d.appendChild(img);
+    }
+    var nm=document.createElement('span');nm.className='file-name';nm.textContent=f.name;d.appendChild(nm);
+    var tag=document.createElement('span');tag.className='file-tag '+(isVideo(f)?'tag-vid':'tag-img');
+    tag.textContent=isVideo(f)?'视频':'图片';d.appendChild(tag);
+    var rm=document.createElement('button');rm.className='file-rm';rm.textContent='\u00d7';
+    rm.onclick=(function(idx){return function(e){e.stopPropagation();files.splice(idx,1);renderFiles();};})(i);
+    d.appendChild(rm);
+    $('fList').appendChild(d);
   });
 }
 
-fcl.addEventListener('click',()=>{files=[];renderFiles();});
+$('fClr').addEventListener('click',function(){files=[];renderFiles();});
 
 // --- 设置面板 ---
-st.addEventListener('click',()=>{
-  const show=sb.style.display==='none';
-  sb.style.display=show?'flex':'none';
-  ar.classList.toggle('open',show);
-});
-
-// --- 加载图片 ---
-function loadImg(file){
-  return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=e=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=e.target.result;};
-    r.onerror=rej;r.readAsDataURL(file);
-  });
-}
+$('setTog').addEventListener('click',function(){var show=$('setBd').style.display==='none';$('setBd').style.display=show?'flex':'none';$('arrow').classList.toggle('open',show);});
 
 // --- 主解密流程 ---
-gb.addEventListener('click',async()=>{
+$('goBtn').addEventListener('click',async function(){
   if(!files.length)return;
-  const password=pw.value, blockSize=parseInt(bs.value)||16;
-  gb.disabled=true;gb.classList.add('loading');
-  pc.style.display='block';rc.style.display='none';
+  var password=$('pw').value,blockSize=parseInt($('bs').value)||16,fps=parseInt($('fpsIn').value)||30;
+  $('goBtn').disabled=true;$('goBtn').classList.add('loading');
+  $('prgCard').style.display='block';$('resCard').style.display='none';
+  $('prgBar').style.width='0%';$('prgLbl').style.color='var(--text3)';
   results=[];
+  resultUrls.forEach(function(u){URL.revokeObjectURL(u);});resultUrls=[];
 
-  for(let idx=0;idx<files.length;idx++){
-    const f=files[idx];
-    pl.textContent=`正在处理 ${idx+1}/${files.length} — ${f.name}`;
-    pb.style.width='0%';
+  for(var idx=0;idx<files.length;idx++){
+    var f=files[idx];
     try{
-      const img=await loadImg(f);
-      const canvas=await decrypt(img,password,blockSize,p=>{
-        pb.style.width=(p*100).toFixed(1)+'%';
-      });
-      const base=f.name.replace(/\.[^.]+$/,'');
-      results.push({canvas,filename:`${base}_解密_${blockSize}.png`});
+      if(isVideo(f)){
+        var vid=await loadVideo(f);
+        var result=await decryptVideo(f,vid,password,blockSize,fps,
+          function(phase,cur,total,extra){
+            $('prgBar').style.width=(cur/total*100).toFixed(1)+'%';
+            $('prgLbl').textContent='处理 '+(idx+1)+'/'+files.length+' \u2014 '+f.name+' \u2014 '+phase+' '+cur+'/'+total+(extra||'');
+          });
+        var url=URL.createObjectURL(result.blob);resultUrls.push(url);
+        results.push({type:'video',url:url,blob:result.blob,hasAudio:result.hasAudio,filename:f.name.replace(/\.[^.]+$/,'')+'_解密.webm'});
+        try{URL.revokeObjectURL(vid.src);}catch(e){}
+      }else{
+        var img=await loadImage(f);
+        var canvas=await decryptImg(img,password,blockSize,function(p){
+          $('prgBar').style.width=(p*100).toFixed(1)+'%';
+          $('prgLbl').textContent='处理 '+(idx+1)+'/'+files.length+' \u2014 '+f.name;
+        });
+        results.push({type:'image',canvas:canvas,filename:f.name.replace(/\.[^.]+$/,'')+'_解密_'+blockSize+'.png'});
+      }
     }catch(err){
-      results.push({error:err.message,filename:f.name});
+      results.push({type:'error',filename:f.name,error:err.message});
     }
   }
 
   showResults();
-  gb.disabled=false;gb.classList.remove('loading');
-  pc.style.display='none';
+  $('goBtn').disabled=false;$('goBtn').classList.remove('loading');
+  $('prgCard').style.display='none';
 });
 
+// --- 结果展示 ---
 function showResults(){
-  rc.style.display='block';
-  rl.innerHTML='';
-  results.forEach((r,i)=>{
-    const div=document.createElement('div');div.className='res-item';
-    if(r.error){
-      div.innerHTML=`<div style="padding:20px;color:var(--err);font-size:.9rem">⚠ ${r.filename}: ${r.error}</div>`;
-    }else{
-      const img=document.createElement('img');
-      // 缩略图以节省内存
-      const max=400,ratio=Math.min(max/r.canvas.width,max/r.canvas.height,1);
-      const tc=document.createElement('canvas');
-      tc.width=Math.round(r.canvas.width*ratio);tc.height=Math.round(r.canvas.height*ratio);
+  $('resCard').style.display='block';$('resList').innerHTML='';
+  results.forEach(function(r,i){
+    var div=document.createElement('div');div.className='res-item';
+    if(r.type==='error'){
+      div.innerHTML='<div class="res-err">\u26a0 '+r.filename+': '+r.error+'</div>';
+    }else if(r.type==='image'){
+      var img=document.createElement('img');
+      var max=400,ratio=Math.min(max/r.canvas.width,max/r.canvas.height,1);
+      var tc=document.createElement('canvas');tc.width=Math.round(r.canvas.width*ratio);tc.height=Math.round(r.canvas.height*ratio);
       tc.getContext('2d').drawImage(r.canvas,0,0,tc.width,tc.height);
       img.src=tc.toDataURL('image/jpeg',.85);
-      img.onclick=()=>showModal(r.canvas);
-      const bar=document.createElement('div');bar.className='res-bar';
-      const fn=document.createElement('span');fn.className='res-fn';fn.textContent=r.filename;
-      const dl=document.createElement('button');dl.className='res-dl';dl.textContent='下载';
-      dl.onclick=()=>dlCanvas(r.canvas,r.filename);
-      bar.append(fn,dl);div.append(img,bar);
+      img.onclick=function(){showModal(r.canvas);};
+      div.appendChild(img);
+      var bar=document.createElement('div');bar.className='res-bar';
+      var fn=document.createElement('span');fn.className='res-fn';fn.textContent=r.filename;
+      var info=document.createElement('div');info.className='res-info';
+      var tg=document.createElement('span');tg.className='file-tag tag-img';tg.textContent='图片';
+      var dl=document.createElement('button');dl.className='res-dl';dl.textContent='下载';
+      dl.onclick=function(){dlCanvas(r.canvas,r.filename);};
+      info.append(tg,dl);bar.append(fn,info);div.appendChild(bar);
+    }else{
+      var vid=document.createElement('video');vid.src=r.url;vid.controls=true;vid.playsInline=true;vid.preload='metadata';
+      div.appendChild(vid);
+      var bar=document.createElement('div');bar.className='res-bar';
+      var fn=document.createElement('span');fn.className='res-fn';fn.textContent=r.filename;
+      var info=document.createElement('div');info.className='res-info';
+      var tg=document.createElement('span');tg.className='file-tag tag-vid';tg.textContent='视频';
+      var dl=document.createElement('button');dl.className='res-dl';dl.textContent='下载';
+      dl.onclick=function(){dlBlob(r.blob,r.filename);};
+      info.append(tg,dl);bar.append(fn,info);div.appendChild(bar);
     }
-    rl.appendChild(div);
+    $('resList').appendChild(div);
   });
-  rc.scrollIntoView({behavior:'smooth'});
+  $('resCard').scrollIntoView({behavior:'smooth'});
 }
 
 function showModal(canvas){
-  const m=document.createElement('div');m.className='modal';
-  const img=document.createElement('img');img.src=canvas.toDataURL('image/png');
-  m.appendChild(img);m.onclick=()=>m.remove();
+  var m=document.createElement('div');m.className='modal';
+  var img=document.createElement('img');img.src=canvas.toDataURL('image/png');
+  m.appendChild(img);m.onclick=function(){m.remove();};
   document.body.appendChild(m);
 }
 
 // --- 下载 ---
 function dlCanvas(canvas,name){
-  if(typeof Android!=='undefined'){
-    // Android WebView：通过 JS Bridge 保存
-    const d=canvas.toDataURL('image/png');
-    Android.saveImage(d.split(',')[1],name);
-  }else{
-    // 普通浏览器
-    const a=document.createElement('a');
-    a.download=name;
-    try{a.href=canvas.toDataURL('image/png');}catch(e){
-      canvas.toBlob(b=>{a.href=URL.createObjectURL(b);a.click();},'image/png');return;
-    }
-    a.click();
-  }
+  if(typeof Android!=='undefined'){var d=canvas.toDataURL('image/png');Android.saveImage(d.split(',')[1],name);return;}
+  var a=document.createElement('a');a.download=name;
+  try{a.href=canvas.toDataURL('image/png');}catch(e){canvas.toBlob(function(b){a.href=URL.createObjectURL(b);a.click();},'image/png');return;}
+  a.click();
 }
 
-$('dlAll').addEventListener('click',async()=>{
-  for(const r of results){
-    if(!r.error){dlCanvas(r.canvas,r.filename);await new Promise(r=>setTimeout(r,400));}
+function dlBlob(blob,name){
+  var a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(blob);
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+$('dlAll').addEventListener('click',async function(){
+  for(var i=0;i<results.length;i++){
+    var r=results[i];if(r.type==='error')continue;
+    if(r.type==='image')dlCanvas(r.canvas,r.filename);else dlBlob(r.blob,r.filename);
+    await new Promise(function(r){setTimeout(r,400);});
   }
 });
-$('rstBtn').addEventListener('click',()=>{files=[];results=[];renderFiles();rc.style.display='none';window.scrollTo({top:0,behavior:'smooth'});});
+
+// --- 重置 ---
+$('rstBtn').addEventListener('click',function(){
+  resultUrls.forEach(function(u){URL.revokeObjectURL(u);});resultUrls=[];
+  files=[];results=[];
+  renderFiles();$('resCard').style.display='none';$('prgCard').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+});
 </script>
 </body>
 </html>
