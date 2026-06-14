@@ -20,7 +20,12 @@ type VidResult = {
 type ErrResult = { type: 'error'; filename: string; error: string };
 type Result = ImgResult | VidResult | ErrResult;
 
-const isVideo = (f: File) => f.type.startsWith('video/');
+const VID_EXTS = new Set(['mp4', 'mov', 'avi', 'webm', 'mkv', '3gp', 'flv', 'wmv', 'ts', 'm4v']);
+const isVideo = (f: File) => {
+  if (f.type.startsWith('video/')) return true;
+  const ext = (f.name || '').split('.').pop()?.toLowerCase() || '';
+  return VID_EXTS.has(ext);
+};
 
 export default function App() {
   const [files, setFiles] = useState<File[]>([]);
@@ -38,6 +43,7 @@ export default function App() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resultUrlsRef = useRef<string[]>([]);
+  const [inputKey, setInputKey] = useState(0);
   const wc = useMemo(() => hasWebCodecs(), []);
 
   // 浏览器能力检查
@@ -58,7 +64,14 @@ export default function App() {
     setFiles((prev) => {
       const next = [...prev];
       for (const f of Array.from(flist)) {
-        if (!f.type.startsWith('image/') && !f.type.startsWith('video/')) continue;
+        // 类型判断：优先看 MIME type，回退看扩展名
+        const mime = (f.type || '').toLowerCase();
+        const ext = (f.name || '').split('.').pop()?.toLowerCase() || '';
+        const imgExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'avif'];
+        const vidExts = ['mp4', 'mov', 'avi', 'webm', 'mkv', '3gp', 'flv', 'wmv', 'ts', 'm4v'];
+        const isImg = mime.startsWith('image/') || imgExts.includes(ext);
+        const isVid = mime.startsWith('video/') || vidExts.includes(ext);
+        if (!isImg && !isVid) continue;
         if (next.some((x) => x.name === f.name && x.size === f.size)) continue;
         next.push(f);
       }
@@ -186,14 +199,20 @@ export default function App() {
         }}
       >
         <input
+          key={inputKey}
           ref={fileInputRef}
           type="file"
-          accept="image/*,video/*"
+          accept="image/*,video/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.mp4,.mov,.avi,.webm,.mkv,.3gp"
           multiple
           hidden
+          onClick={(e) => e.stopPropagation()}
           onChange={(e) => {
-            if (e.target.files) addFiles(e.target.files);
-            e.target.value = '';
+            const fl = e.target.files;
+            if (fl && fl.length > 0) {
+              const arr = Array.from(fl);
+              addFiles(arr);
+            }
+            setInputKey((k) => k + 1);
           }}
         />
         <div className="upload-icon">
